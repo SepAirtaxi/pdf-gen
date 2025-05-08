@@ -68,7 +68,7 @@ async function generateInvoicePDF() {
     }
     
     // *** Start text BELOW logo/start Y + padding ***
-    currentY = logoEndY + 4; // Start text Y below logo end Y + padding
+    currentY = logoEndY + 8; // Start text Y below logo end Y + padding
     let companyTextEndY = currentY; // Track end of text from this new start
 
     if (companyDetails) {
@@ -113,21 +113,47 @@ async function generateInvoicePDF() {
         doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.1); doc.rect(boxX, boxY, boxWidth, boxHeight); 
 
         doc.setFontSize(7.5); doc.setTextColor(0, 0, 0); 
-        let textYInBox = boxY + 4; 
+        let textYInBox = boxY + 2; // CHANGE: Further reduced top padding from 3 to 2
         const declarationText = "I declare the below information to be true and correct.";
-        const splitDeclText = doc.splitTextToSize(declarationText, boxWidth - 6); 
+        const splitDeclText = doc.splitTextToSize(declarationText, boxWidth - 2); // CHANGE: Further reduced side padding from 4 to 2
         doc.text(splitDeclText, boxX + boxWidth / 2, textYInBox, { align: 'center', baseline: 'top' });
-        textYInBox += (splitDeclText.length * 3) + 3; 
+        textYInBox += (splitDeclText.length * 3) + 2; // Keep this spacing
 
         const signedByText = `Signed by: ${signeeDetails.name || 'N/A'}`;
         doc.text(signedByText, boxX + boxWidth / 2, textYInBox, { align: 'center' });
-        textYInBox += 4; // *** Reduced space before signature ***
+        textYInBox += 3; // CHANGE: Reduced space before signature from 4 to 3
 
         if (signeeDetails.signatureBase64) {
             try { 
-                 const sigImg=new Image();sigImg.src=signeeDetails.signatureBase64;await new Promise((res,rej)=>{sigImg.onload=res;sigImg.onerror=rej;}); if(sigImg.width>0&&sigImg.height>0){const sigMaxH=boxHeight-(textYInBox-boxY)-3;const sigMaxW=boxWidth-10;let sigW=sigImg.width;let sigH=sigImg.height;const r=Math.min(sigMaxW/sigW,sigMaxH/sigH);sigW=sigW*r*1.20;sigH=sigH*r*1.20;const sigX=boxX+(boxWidth-sigW)/2;doc.addImage(signeeDetails.signatureBase64,'PNG',sigX,textYInBox,sigW,sigH);}else{doc.text("(Inv Sig)",boxX+3,textYInBox+3);}
-            } catch (e) { console.error("Sig err:", e); doc.text("(Sig Error)", boxX + 3, textYInBox + 3); }
-        } else { doc.text("(No signature)", boxX + boxWidth / 2, textYInBox + 3, { align: 'center' }); }
+                const sigImg = new Image();
+                sigImg.src = signeeDetails.signatureBase64;
+                await new Promise((res, rej) => {
+                    sigImg.onload = res;
+                    sigImg.onerror = rej;
+                });
+                
+                if (sigImg.width > 0 && sigImg.height > 0) {
+                    // Allow more space at bottom of box
+                    const sigMaxH = boxHeight - (textYInBox - boxY) - 2.5; // FIXED: Reduced from 5 to 2.5 (50% reduction)
+                    const sigMaxW = boxWidth - 10;
+                    let sigW = sigImg.width;
+                    let sigH = sigImg.height;
+                    // Using a scaling factor of 1.0 instead of 1.2 to make signature smaller
+                    const r = Math.min(sigMaxW/sigW, sigMaxH/sigH);
+                    sigW = sigW * r * 1.0; // Reduced from 1.20 to 1.0 for smaller signature
+                    sigH = sigH * r * 1.0; // Reduced from 1.20 to 1.0 for smaller signature
+                    const sigX = boxX + (boxWidth - sigW) / 2;
+                    doc.addImage(signeeDetails.signatureBase64, 'PNG', sigX, textYInBox, sigW, sigH);
+                } else {
+                    doc.text("(Inv Sig)", boxX + 3, textYInBox + 3);
+                }
+            } catch (e) { 
+                console.error("Sig err:", e); 
+                doc.text("(Sig Error)", boxX + 3, textYInBox + 3); 
+            }
+        } else { 
+            doc.text("(No signature)", boxX + boxWidth / 2, textYInBox + 3, { align: 'center' }); 
+        }
     } 
 
     // Reset main Y position below the taller of the two top sections
@@ -207,15 +233,15 @@ async function generateInvoicePDF() {
         startY: currentY, head: itemsTableHeaders, body: itemsTableBodyData, theme: 'grid', 
         styles: { fontSize: 8, cellPadding: 1, valign: 'middle', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0,0,0] }, 
         headStyles: { fillColor: [220, 220, 220], textColor: 0, fontStyle: 'bold', halign: 'center', cellPadding: 1 }, // *** Reduced head padding ***
-        bodyStyles: { halign: 'center'}, // *** Centered Body ***
+        bodyStyles: { halign: 'center'}, // CHANGE: Set all body cells centered by default
         columnStyles: { 
-            0: { cellWidth: itemColWidths.num, halign: 'center' }, // Already centered
-            1: { cellWidth: itemColWidths.uom, halign: 'center' }, // Centered
-            2: { cellWidth: itemColWidths.pn, halign: 'center' }, // Centered
-            3: { cellWidth: itemColWidths.sn, halign: 'center' }, // Centered
-            4: { cellWidth: itemColWidths.description, halign: 'center' }, // Centered
-            5: { cellWidth: itemColWidths.origin, halign: 'center' }, // Centered
-            6: { cellWidth: itemColWidths.value, halign: 'right' } // Keep Value right-aligned
+            0: { cellWidth: itemColWidths.num, halign: 'center' }, 
+            1: { cellWidth: itemColWidths.uom, halign: 'center' }, 
+            2: { cellWidth: itemColWidths.pn, halign: 'center' }, 
+            3: { cellWidth: itemColWidths.sn, halign: 'center' }, 
+            4: { cellWidth: itemColWidths.description, halign: 'center' }, 
+            5: { cellWidth: itemColWidths.origin, halign: 'center' }, 
+            6: { cellWidth: itemColWidths.value, halign: 'center' } // FIXED: Now center-aligned as requested
         },
         margin: { left: margin, right: margin }
     });
@@ -234,10 +260,10 @@ async function generateInvoicePDF() {
             startY: currentY, head: colliTableHeaders, body: colliTableBodyData, theme: 'grid', 
             styles: { fontSize: 8, cellPadding: 1, valign: 'middle', lineColor: [0, 0, 0], lineWidth: 0.1, textColor: [0,0,0] }, 
             headStyles: { fillColor: [220, 220, 220], textColor: 0, fontStyle: 'bold', halign: 'center', cellPadding: 1 }, // *** Reduced head padding ***
-            bodyStyles: { halign: 'center' }, // *** Centered Body ***
+            bodyStyles: { halign: 'center' }, // CHANGE: Set all cells to center-aligned by default
             columnStyles: { 
                 0: { cellWidth: 10, halign: 'center' }, 
-                1: { cellWidth: 'auto', halign: 'left' }, // Keep Packing left-aligned
+                1: { cellWidth: 'auto', halign: 'center' }, // CHANGE: Changed from left to center alignment
                 2: { cellWidth: 25, halign: 'center' }, 
                 3: { cellWidth: 25, halign: 'center' }, 
                 4: { cellWidth: 25, halign: 'center' }, 
