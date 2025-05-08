@@ -1,0 +1,455 @@
+/* --- Reset & Base --- */
+body {
+    font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #eef1f5;
+    color: #333;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.app-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    overflow: hidden; 
+}
+
+h1, h2, h3 {
+    color: #2c3e50; 
+    margin-top: 0;
+}
+h2 { font-size: 1.6em; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eaeaea;}
+h3 { font-size: 1.3em; margin-bottom: 15px; }
+
+
+/* --- Header --- */
+.app-header {
+    background-color: #34495e; 
+    color: #ffffff;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.app-header .logo-title .invoice-module-title {
+    margin: 0;
+    font-family: 'Montserrat', Futura, 'Century Gothic', AppleGothic, sans-serif;
+    font-size: 1.8em;
+    font-weight: 500; 
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+.back-button-header {
+    background-color: #5dade2; 
+    color: white;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+}
+.back-button-header:hover {
+    background-color: #4a90e2;
+}
+
+
+/* --- Action Bar (for Generate PDF button) --- */
+.action-bar {
+    padding: 18px 25px; 
+    background-color: #f8f9fa; 
+    text-align: center; 
+    border-bottom: 1px solid #dee2e6;
+}
+.primary-action-button {
+    background-color: #28a745; 
+    color: white;
+    font-size: 1.1em;
+    font-weight: 500; 
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+}
+.primary-action-button .icon { 
+    margin-right: 10px;
+    vertical-align: middle; 
+    /* SVG width/height is intrinsic, fill="currentColor" inherits text color */
+}
+.primary-action-button:hover {
+    background-color: #218838; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.primary-action-button:active {
+    background-color: #1e7e34; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+
+/* --- Tabs --- */
+.tabs-container {
+    background-color: #f0f3f5; 
+}
+.tabs {
+    display: flex; 
+    overflow: hidden; 
+}
+.tab-link {
+    flex-grow: 1; 
+    background-color: transparent; 
+    border: none; 
+    border-bottom: 3px solid transparent; 
+    outline: none;
+    cursor: pointer;
+    padding: 15px 18px; 
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    font-size: 1.05em; 
+    color: #566573; 
+    text-align: center;
+    font-weight: 500;
+}
+.tab-link:hover {
+    background-color: #e0e6eb; 
+    color: #34495e;
+}
+.tab-link.active {
+    background-color: #ffffff; 
+    color: #3498db; 
+    border-bottom: 3px solid #3498db; 
+    font-weight: 600;
+}
+.tab-content {
+    display: none;
+    padding: 25px; 
+    border-top: none;
+}
+.tab-content.active-tab-content {
+    display: block;
+}
+
+
+/* --- General Form Elements & Grid --- */
+.button { 
+    background-color: #5dade2; 
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 0.95em;
+    transition: background-color 0.2s ease;
+}
+.button:hover {
+    background-color: #4a90e2; 
+}
+.button[disabled] {
+    background-color: #bdc3c7; 
+    cursor: not-allowed;
+}
+.action-button { 
+    background-color: #e74c3c; 
+    color: white; /* Ensure text color for action buttons */
+    font-size: 0.85em; 
+    padding: 6px 10px;
+    border: none; /* Added for consistency */
+    border-radius: 3px; /* Added for consistency */
+    cursor: pointer; /* Added for consistency */
+}
+.action-button:hover {
+    background-color: #c0392b; 
+}
+.action-button[disabled] { /* Style for disabled action buttons */
+    background-color: #f5b7b1; /* Lighter red when disabled */
+    cursor: not-allowed;
+}
+
+
+input[type="text"], input[type="date"], input[type="number"], select, textarea {
+    padding: 10px;
+    border: 1px solid #ced4da; 
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
+    width: 100%; 
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #3498db; 
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25); 
+    outline: none;
+}
+select {
+    background-color: #fff; 
+}
+
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 15px 30px; 
+    margin-bottom: 25px;
+}
+.form-grid-column div { 
+    margin-bottom: 15px;
+    display: flex; 
+    flex-wrap: wrap; 
+    align-items: center;
+}
+.form-grid-column label {
+    width: 150px; 
+    font-weight: 500; 
+    color: #495057; 
+    margin-right: 10px; 
+    flex-shrink: 0; 
+}
+.form-grid-column input, .form-grid-column select {
+    flex-grow: 1; 
+    min-width: 180px;
+}
+#general-form .form-grid-column div:has(> #inv-total-value) input,
+#general-form .form-grid-column div:has(> #inv-total-weight) input {
+    flex-grow: 0; 
+    width: 160px; 
+}
+#general-form .form-grid-column div:has(> #inv-total-value) span,
+#general-form .form-grid-column div:has(> #inv-total-weight) span { 
+    margin-left: 8px;
+    font-weight: 500;
+}
+
+
+.full-width-fieldset {
+    margin-top: 20px;
+    padding: 15px 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+.full-width-fieldset legend {
+    font-weight: 600;
+    color: #34495e;
+    padding: 0 8px;
+    font-size: 1.1em;
+}
+
+/* Statements Layout - One per line */
+#inv-statements-list {
+    display: flex;
+    flex-direction: column; 
+    gap: 8px; 
+}
+#inv-statements-list div { 
+    display: flex; 
+    align-items: center;
+    width: 100%; 
+}
+#inv-statements-list input[type="checkbox"] {
+    margin-right: 8px; 
+    transform: scale(1.1);
+    flex-shrink: 0; 
+}
+#inv-statements-list label {
+    font-weight: normal;
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    cursor: pointer;
+    flex-grow: 1; 
+}
+
+
+/* --- Tables --- */
+.table-controls {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 10px;
+}
+table {
+    width: 100%;
+    border-collapse: separate; 
+    border-spacing: 0;
+    margin-top: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px; 
+    font-size: 0.95em;
+}
+th, td {
+    border-bottom: 1px solid #dee2e6; 
+    padding: 10px 12px; 
+    text-align: left;
+    vertical-align: middle;
+}
+td { border-right: 1px solid #eaeaea; } 
+td:last-child { border-right: none; }
+th { 
+    background-color: #f8f9fa; 
+    color: #495057;
+    font-weight: 600;
+    white-space: nowrap;
+    border-right: 1px solid #e0e0e0; 
+}
+th:last-child { border-right: none; }
+tr:last-child td {
+    border-bottom: none; 
+}
+thead tr:first-child th:first-child { border-top-left-radius: 5px; }
+thead tr:first-child th:last-child { border-top-right-radius: 5px; }
+tbody tr:last-child td:first-child { border-bottom-left-radius: 5px; }
+tbody tr:last-child td:last-child { border-bottom-right-radius: 5px; }
+
+
+#items-table td input[type="number"], 
+#items-table td input[type="text"],
+#colli-table td input[type="number"],
+#colli-table td select {
+    box-sizing: border-box;
+    padding: 7px; 
+    font-size: 0.98em;
+    max-width: 100%; 
+}
+
+
+/* --- Settings Page --- */
+.settings-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+.settings-section {
+    border: 1px solid #e0e6eb;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fdfdfe;
+}
+.settings-section h3 {
+    margin-top: 0;
+    color: #3498db;
+}
+.settings-list {
+    list-style-type: none;
+    padding: 0;
+    max-height: 350px; 
+    overflow-y: auto;
+    border: 1px solid #e0e6eb;
+    border-radius: 6px;
+}
+.settings-list li {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f1f1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+.settings-list li:hover {
+    background-color: #f8f9fa;
+}
+.settings-list li:last-child { border-bottom: none; }
+.settings-list .actions button { margin-left: 8px; }
+
+
+/* --- Modals --- */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1050; 
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6); 
+}
+.modal-content {
+    background-color: #ffffff;
+    margin: 7% auto; 
+    padding: 30px;
+    border: none; 
+    width: 60%;
+    max-width: 800px; 
+    border-radius: 10px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.close-button { 
+    color: #777;
+    font-size: 32px;
+    font-weight: bold;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    transition: color 0.2s ease;
+}
+.close-button:hover, .close-button:focus {
+    color: #333; text-decoration: none; cursor: pointer;
+}
+.modal-actions { margin-top: 25px; text-align: right; }
+.modal-actions .button { margin-left: 12px; }
+
+.modal-content label {
+    width: 200px; 
+}
+
+
+/* --- Load Data Tab --- */
+#load-data select, #load-data button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+
+/* Responsive adjustments - ensure these are at the end */
+@media (max-width: 992px) { 
+    .form-grid {
+        grid-template-columns: 1fr; 
+    }
+    .modal-content {
+        width: 80%;
+    }
+}
+
+@media (max-width: 768px) { 
+    .app-container { margin: 15px; border-radius: 8px; }
+    .app-header { padding: 12px 15px; flex-direction: column; gap: 10px; text-align: center;}
+    .app-header .logo-title .invoice-module-title { font-size: 1.5em; }
+    .action-bar { padding: 12px 15px; }
+    .primary-action-button { font-size: 1em; padding: 10px 20px; }
+    
+    .tabs { flex-direction: column; } 
+    .tab-link { border-bottom: 1px solid #e0e6eb; border-left: 3px solid transparent; }
+    .tab-link.active { border-bottom: 1px solid #e0e6eb; border-left: 3px solid #3498db; }
+
+    .tab-content { padding: 15px; }
+    h2 { font-size: 1.4em; }
+
+    .form-grid-column label, .modal-content label {
+        width: 100%; 
+        margin-bottom: 5px;
+        margin-right: 0;
+    }
+    .form-grid-column input, .form-grid-column select,
+    .modal-content input, .modal-content select, .modal-content textarea {
+        width: 100%;
+        min-width: auto;
+    }
+    .modal-content { width: 95%; margin: 5% auto; padding: 20px;}
+    
+    #items-table, #colli-table { font-size: 0.9em; display: block; overflow-x: auto; }
+    #items-table th, #items-table td,
+    #colli-table th, #colli-table td {
+        padding: 8px 6px;
+        white-space: nowrap; 
+    }
+    #items-table td input, #items-table td select,
+    #colli-table td input, #colli-table td select {
+        min-width: 100px; 
+    }
+
+    .settings-sections { grid-template-columns: 1fr; }
+}
