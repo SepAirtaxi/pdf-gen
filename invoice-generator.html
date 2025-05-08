@@ -120,7 +120,18 @@
     <script src="js/load-invoice.js?v=1.3"></script>   
     <script src="js/app.js?v=1.2"></script>            
 
-    <!-- Removed initial tab click script -->
+	<!-- Loading Spinner Overlay -->
+	<div id="loading-spinner" class="spinner-overlay">
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<div class="spinner"></div>
+			<div class="spinner-text">Generating PDF...</div>
+		</div>
+	</div>
+	
+	<!-- Toast Notification -->
+	<div id="toast-notification" class="toast-notification">
+		<div id="toast-message">PDF generated and data saved!</div>
+	</div>
 
 </body>
 </html>
