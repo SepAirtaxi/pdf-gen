@@ -4,14 +4,158 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Generator</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #eef1f5;
+            color: #333;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            width: 900px;
+            max-width: 90%;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 3.5rem;
+            margin-bottom: 40px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-auto-rows: 130px;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .module-button {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            font-size: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .module-button:hover:not([disabled]) {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .module-button[disabled] {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+        .coming-soon {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.8rem;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        .blue-button {
+            background-color: #3498db;
+        }
+        
+        .blue-button:hover:not([disabled]) {
+            background-color: #2980b9;
+        }
+
+        .green-button {
+            background-color: #2ecc71;
+        }
+        
+        .green-button:hover:not([disabled]) {
+            background-color: #27ae60;
+        }
+
+        .yellow-button {
+            background-color: #f1c40f;
+        }
+        
+        .yellow-button:hover:not([disabled]) {
+            background-color: #f39c12;
+        }
+
+        .red-button {
+            background-color: #e74c3c;
+        }
+        
+        .red-button:hover:not([disabled]) {
+            background-color: #c0392b;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                max-width: 95%;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+                margin-bottom: 30px;
+            }
+            
+            .module-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .module-button {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>PDF Generator</h1>
-        <div class="module-buttons">
-            <a href="invoice-generator.html" class="button">Invoice Generator</a>
-            <button class="button" disabled>Certificate Generator (Coming Soon)</button>
+        <div class="module-grid">
+            <a href="invoice-generator.html" class="module-button blue-button">
+                Invoice Generator
+            </a>
+            <button class="module-button green-button" disabled>
+                Certificate Generator
+                <span class="coming-soon">Coming Soon</span>
+            </button>
+            <button class="module-button yellow-button" disabled>
+                Report Generator
+                <span class="coming-soon">Coming Soon</span>
+            </button>
+            <button class="module-button red-button" disabled>
+                Approval System
+                <span class="coming-soon">Coming Soon</span>
+            </button>
         </div>
     </div>
 </body>
