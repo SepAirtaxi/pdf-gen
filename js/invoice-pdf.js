@@ -263,121 +263,146 @@ async function generateInvoicePDF() {
         doc.setTextColor(0, 0, 0); // Reset text color to black
         console.log("After Title, Y:", currentY);
 
-        // D. From / To Addresses Table --- 
-        // FIXED APPROACH TO AVOID DOUBLE-RENDERING
+        // D. From / To Addresses Table --- COMPLETELY NEW APPROACH
         const fromEntityDetails = generalData.from ? await getDocById(ENTITIES_COLLECTION, generalData.from) : null;
         const toEntityDetails = generalData.to ? await getDocById(ENTITIES_COLLECTION, generalData.to) : null;
         
-        // Create formatted data arrays for From and To columns
-        const fromData = [];
-        const toData = [];
+        // Draw the table headers (From and To)
+        const columnWidth = usableWidth / 2;
+        const fromHeaderX = margin;
+        const toHeaderX = margin + columnWidth;
         
-        // Add From entity data
+        // Draw the header background
+        doc.setFillColor(230, 230, 230);
+        doc.rect(fromHeaderX, currentY, columnWidth, 5, 'F');
+        doc.rect(toHeaderX, currentY, columnWidth, 5, 'F');
+        
+        // Draw the header text
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.text('From:', fromHeaderX + 1, currentY + 3.5);
+        doc.text('To:', toHeaderX + 1, currentY + 3.5);
+        
+        // Move to data section
+        currentY += 5;
+        
+        // Prepare data sections
+        let fromLines = [];
         if (fromEntityDetails) {
-            if (fromEntityDetails.companyName) fromData.push(fromEntityDetails.companyName);
-            if (fromEntityDetails.co) fromData.push("C/O " + fromEntityDetails.co);
-            if (fromEntityDetails.address1) fromData.push(fromEntityDetails.address1);
-            if (fromEntityDetails.address2) fromData.push(fromEntityDetails.address2);
+            if (fromEntityDetails.companyName) fromLines.push(fromEntityDetails.companyName);
+            if (fromEntityDetails.co) fromLines.push("C/O " + fromEntityDetails.co);
+            if (fromEntityDetails.address1) fromLines.push(fromEntityDetails.address1);
+            if (fromEntityDetails.address2) fromLines.push(fromEntityDetails.address2);
             
             let zipCityState = "";
             if (fromEntityDetails.zipCode) zipCityState += fromEntityDetails.zipCode + " ";
             if (fromEntityDetails.city) zipCityState += fromEntityDetails.city;
-            if (zipCityState) fromData.push(zipCityState);
+            if (zipCityState) fromLines.push(zipCityState);
             
-            if (fromEntityDetails.country) fromData.push(fromEntityDetails.country);
-            if (fromEntityDetails.vatEori) fromData.push(`VAT/EORI: ${fromEntityDetails.vatEori}`);
-            if (fromEntityDetails.email) fromData.push(`Email: ${fromEntityDetails.email}`);
-            if (fromEntityDetails.phone) fromData.push(`Phone: ${fromEntityDetails.phone}`);
+            if (fromEntityDetails.country) fromLines.push(fromEntityDetails.country);
+            if (fromEntityDetails.vatEori) fromLines.push("VAT/EORI: " + fromEntityDetails.vatEori);
+            if (fromEntityDetails.email) fromLines.push("Email: " + fromEntityDetails.email);
+            if (fromEntityDetails.phone) fromLines.push("Phone: " + fromEntityDetails.phone);
         }
         
-        // Add To entity data
+        let toLines = [];
         if (toEntityDetails) {
-            if (toEntityDetails.companyName) toData.push(toEntityDetails.companyName);
-            if (toEntityDetails.co) toData.push("C/O " + toEntityDetails.co);
-            if (toEntityDetails.address1) toData.push(toEntityDetails.address1);
-            if (toEntityDetails.address2) toData.push(toEntityDetails.address2);
+            if (toEntityDetails.companyName) toLines.push(toEntityDetails.companyName);
+            if (toEntityDetails.co) toLines.push("C/O " + toEntityDetails.co);
+            if (toEntityDetails.address1) toLines.push(toEntityDetails.address1);
+            if (toEntityDetails.address2) toLines.push(toEntityDetails.address2);
             
             let zipCityState = "";
             if (toEntityDetails.zipCode) zipCityState += toEntityDetails.zipCode + " ";
             if (toEntityDetails.city) zipCityState += toEntityDetails.city;
-            if (zipCityState) toData.push(zipCityState);
+            if (zipCityState) toLines.push(zipCityState);
             
-            if (toEntityDetails.country) toData.push(toEntityDetails.country);
-            if (toEntityDetails.vatEori) toData.push(`VAT/EORI: ${toEntityDetails.vatEori}`);
-            if (toEntityDetails.email) toData.push(`Email: ${toEntityDetails.email}`);
-            if (toEntityDetails.phone) toData.push(`Phone: ${toEntityDetails.phone}`);
+            if (toEntityDetails.country) toLines.push(toEntityDetails.country);
+            if (toEntityDetails.vatEori) toLines.push("VAT/EORI: " + toEntityDetails.vatEori);
+            if (toEntityDetails.email) toLines.push("Email: " + toEntityDetails.email);
+            if (toEntityDetails.phone) toLines.push("Phone: " + toEntityDetails.phone);
         }
         
-        // Determine the maximum number of rows needed
-        const maxRows = Math.max(fromData.length, toData.length);
+        // Determine total rows needed (max of fromLines or toLines)
+        const totalRows = Math.max(fromLines.length, toLines.length);
+        const lineHeight = 3.5; // Height per line of text
+        const padding = 2; // Top and bottom padding
+        const dataHeight = (totalRows * lineHeight) + (padding * 2);
         
-        // Create the body data for the table
-        const fromToTableBody = [];
-        for (let i = 0; i < maxRows; i++) {
-            fromToTableBody.push([
-                fromData[i] || '',
-                toData[i] || ''
-            ]);
+        // Draw the data cell backgrounds
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.3);
+        
+        // Draw the entire table border
+        doc.rect(fromHeaderX, currentY - 5, columnWidth * 2, dataHeight + 5, 'S');
+        
+        // Draw vertical line between From and To columns
+        doc.line(toHeaderX, currentY - 5, toHeaderX, currentY + dataHeight);
+        
+        // Render text in data cells
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        
+        // Render From column text
+        let fromY = currentY + padding;
+        for (let i = 0; i < fromLines.length; i++) {
+            const line = fromLines[i];
+            
+            // Check if this is a line that should have bold prefix
+            if (line.startsWith("VAT/EORI: ") || line.startsWith("Email: ") || line.startsWith("Phone: ")) {
+                const parts = line.split(": ");
+                const prefix = parts[0] + ": ";
+                const rest = parts.slice(1).join(": ");
+                
+                // Draw prefix in bold
+                doc.setFont('helvetica', 'bold');
+                doc.text(prefix, fromHeaderX + 1, fromY);
+                
+                // Draw rest of line in normal font
+                const prefixWidth = doc.getTextWidth(prefix);
+                doc.setFont('helvetica', 'normal');
+                doc.text(rest, fromHeaderX + 1 + prefixWidth, fromY);
+            } else {
+                // Draw regular line in normal font
+                doc.text(line, fromHeaderX + 1, fromY);
+            }
+            
+            fromY += lineHeight;
         }
         
-        // Draw the From/To table using the prepared data
-        doc.autoTable({
-            startY: currentY,
-            head: [['From:', 'To:']],
-            body: fromToTableBody,
-            theme: 'grid',
-            styles: {
-                fontSize: 8,
-                cellPadding: {top: 0.5, bottom: 0.5, left: 1, right: 1},
-                lineColor: [0, 0, 0],
-                lineWidth: 0.3,
-                valign: 'middle'
-            },
-            headStyles: {
-                fillColor: [230, 230, 230],
-                textColor: [0, 0, 0],
-                fontStyle: 'bold'
-            },
-            columnStyles: {
-                0: { cellWidth: usableWidth / 2 },
-                1: { cellWidth: usableWidth / 2 }
-            },
-            // Custom formatter to apply bold to specific parts of text
-            didDrawCell: function(data) {
-                if (data.section === 'body') {
-                    const text = data.cell.raw;
-                    if (typeof text === 'string') {
-                        // Check for bold prefix parts - only apply bold formatting
-                        // if the text contains a prefix we want to make bold
-                        const boldPrefixes = ["VAT/EORI:", "Email:", "Phone:"];
-                        const boldPrefix = boldPrefixes.find(prefix => text.startsWith(prefix));
-                        
-                        if (boldPrefix) {
-                            // Clear the default cell text that would be rendered
-                            data.cell.text = [''];
-                            
-                            // Draw the prefix in bold
-                            doc.setFont('helvetica', 'bold');
-                            doc.text(boldPrefix, data.cell.x + 1, data.cell.y + 4); // Adjusted Y position for better alignment
-                            
-                            // Draw the rest of the text in normal font
-                            const restOfText = text.substring(boldPrefix.length);
-                            if (restOfText) {
-                                doc.setFont('helvetica', 'normal');
-                                const prefixWidth = doc.getTextWidth(boldPrefix);
-                                doc.text(restOfText, data.cell.x + 1 + prefixWidth, data.cell.y + 4); // Align with the bold prefix
-                            }
-                        }
-                    }
-                }
-            },
-            margin: { left: margin, right: margin }
-        });
+        // Render To column text
+        let toY = currentY + padding;
+        for (let i = 0; i < toLines.length; i++) {
+            const line = toLines[i];
+            
+            // Check if this is a line that should have bold prefix
+            if (line.startsWith("VAT/EORI: ") || line.startsWith("Email: ") || line.startsWith("Phone: ")) {
+                const parts = line.split(": ");
+                const prefix = parts[0] + ": ";
+                const rest = parts.slice(1).join(": ");
+                
+                // Draw prefix in bold
+                doc.setFont('helvetica', 'bold');
+                doc.text(prefix, toHeaderX + 1, toY);
+                
+                // Draw rest of line in normal font
+                const prefixWidth = doc.getTextWidth(prefix);
+                doc.setFont('helvetica', 'normal');
+                doc.text(rest, toHeaderX + 1 + prefixWidth, toY);
+            } else {
+                // Draw regular line in normal font
+                doc.text(line, toHeaderX + 1, toY);
+            }
+            
+            toY += lineHeight;
+        }
         
-        currentY = doc.lastAutoTable.finalY + 5; 
+        // Update current Y position
+        currentY += dataHeight;
         console.log("After From/To Table, Y:", currentY);
 
         // E. & F. Split Details & Statements Tables ---
+        currentY += 5; // Add some spacing
         const detailsTableStartY = currentY;
         let detailsTableEndY = currentY; let statementsTableEndY = currentY;
         const detailsBodyData = [];
