@@ -98,10 +98,10 @@ async function getNextInvoiceSequentialId(toEntityName) {
                  console.error("[Transaction] Invalid counterDoc snapshot received:", counterDoc);
                  throw new Error("Invalid counter document snapshot in transaction."); // Throw error to abort transaction
             }
-            return String(newCount).padStart(3, '0');
+            return String(newCount).padStart(4, '0'); // Changed from 3 to 4 digits
         });
     } catch (error) {
         console.error("Sequential ID Transaction failed: ", error);
-        return "RND" + String(Math.floor(Math.random() * 1000)).padStart(3, '0'); 
+        return "RND" + String(Math.floor(Math.random() * 10000)).padStart(4, '0'); // Changed from 3 to 4 digits
     }
 }

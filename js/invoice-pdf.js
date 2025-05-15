@@ -62,10 +62,14 @@ async function generateInvoicePDF() {
         }
 
         const toEntityNameClean = generalData.toEntityName ? generalData.toEntityName.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'entity';
-        let sequentialIdForName = 'XXX';
+        let sequentialIdForName = 'XXXX';
         try { sequentialIdForName = await getNextInvoiceSequentialId(toEntityNameClean); } 
         catch (seqError) { console.error("Error getting sequential ID:", seqError); }
-        const generatedPdfFileName = `Proforma_${toEntityNameClean}_${sequentialIdForName}.pdf`;
+        
+        // Use the selected invoice type in the filename (or default to "Proforma")
+        const invoiceType = generalData.invoiceType || 'Proforma Invoice';
+        const invoiceTypeForFilename = invoiceType.replace('Invoice', '').trim();
+        const generatedPdfFileName = `${invoiceTypeForFilename}_${toEntityNameClean}_${sequentialIdForName}.pdf`;
         console.log("Generated PDF Filename:", generatedPdfFileName);
 
         let savedInvoiceId;
@@ -206,9 +210,10 @@ async function generateInvoicePDF() {
         currentY = Math.max(companyHeaderEndY, declarationBoxEndY) + 8; 
         console.log("After Top Sections, Y:", currentY);
 
-        // C. "Proforma Invoice" Title --- 
+        // C. Invoice Title (Use selected invoice type) --- 
         doc.setFontSize(20); doc.setFont("helvetica", "bold");
-        const titleText = "Proforma Invoice"; const titleWidth = doc.getTextWidth(titleText);
+        const titleText = generalData.invoiceType || "Proforma Invoice"; // Use the selected invoice type
+        const titleWidth = doc.getTextWidth(titleText);
         doc.text(titleText, (pageWidth - titleWidth) / 2, currentY);
         currentY += 3; // *** Further reduced space below title ***
         console.log("After Title, Y:", currentY);

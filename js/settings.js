@@ -26,10 +26,20 @@ const SIGNEES_COLLECTION = 'signees';
 
 
 // --- Utility to create and show a modal ---
-function createModal(title, contentHtml, onSave, onCancel, modalId = 'settings-generic-modal') {
+function createModal(title, contentHtml, onSave = null, onCancel = null, modalId = 'settings-generic-modal', closeOnly = false) {
     const existingModal = document.getElementById(modalId);
     if (existingModal) {
         existingModal.remove();
+    }
+
+    let buttonsHtml = '';
+    if (closeOnly) {
+        buttonsHtml = `<button class="button" onclick="closeModal('${modalId}')">Close</button>`;
+    } else {
+        buttonsHtml = `
+            <button id="${modalId}-save-btn" class="button primary-button">Save</button>
+            <button class="button" onclick="closeModal('${modalId}')">Cancel</button>
+        `;
     }
 
     const modalHTML = `
@@ -39,8 +49,7 @@ function createModal(title, contentHtml, onSave, onCancel, modalId = 'settings-g
                 <h2>${title}</h2>
                 ${contentHtml}
                 <div class="modal-actions">
-                    <button id="${modalId}-save-btn" class="button primary-button">Save</button>
-                    <button class="button" onclick="closeModal('${modalId}')">Cancel</button>
+                    ${buttonsHtml}
                 </div>
             </div>
         </div>
@@ -50,11 +59,13 @@ function createModal(title, contentHtml, onSave, onCancel, modalId = 'settings-g
     const modalElement = document.getElementById(modalId);
     modalElement.style.display = 'block';
 
-    const saveButton = document.getElementById(`${modalId}-save-btn`);
-    if (onSave) {
-        saveButton.onclick = () => {
-            onSave(); 
-        };
+    if (!closeOnly) {
+        const saveButton = document.getElementById(`${modalId}-save-btn`);
+        if (onSave) {
+            saveButton.onclick = () => {
+                onSave(); 
+            };
+        }
     }
 }
 
@@ -225,7 +236,7 @@ async function openManageEntitiesModal() {
         entitiesListHtml += `<li><span>${entity.name} (${entity.companyName || 'N/A'})</span><span class="actions"><button class="button" onclick="openAddEditEntityModal('${entity.id}')">Edit</button><button class="action-button" onclick="deleteEntity('${entity.id}')">Remove</button></span></li>`;
     });
     entitiesListHtml += '</ul>';
-    createModal('Manage Entities', `${entitiesListHtml}<button class="button" onclick="openAddEditEntityModal()">Add New Entity</button>`, null, null, 'manage-entities-modal');
+    createModal('Manage Entities', `${entitiesListHtml}<button class="button" onclick="openAddEditEntityModal()">Add New Entity</button>`, null, null, 'manage-entities-modal', true);
 }
 async function openAddEditEntityModal(entityId = null) {
     currentEditingEntityId = entityId;
@@ -334,7 +345,7 @@ async function deleteSimpleSetting(collectionName, itemId, itemTypeName = 'Item'
 async function openManageCurrenciesModal() {
     const items = await getAllDocs(CURRENCIES_COLLECTION); let listHtml = '<ul class="settings-list">';
     items.sort((a,b) => (a.code||'').localeCompare(b.code||'')).forEach(item => { listHtml += `<li><span>${item.code || 'N/A'} ${item.name ? '('+item.name+')' : ''}</span><span class="actions"><button class="button" onclick="openAddEditSimpleSettingModal('${CURRENCIES_COLLECTION}', '${item.id}', 'Currency', [{label: 'Code (e.g., USD)', id: 'currency-code', field: 'code', required: true}, {label: 'Name (e.g., US Dollar)', id: 'currency-name', field: 'name'}], openManageCurrenciesModal, populateCurrenciesDropdown)">Edit</button><button class="action-button" onclick="deleteSimpleSetting('${CURRENCIES_COLLECTION}', '${item.id}', 'Currency', openManageCurrenciesModal, populateCurrenciesDropdown)">Remove</button></span></li>`; });
-    listHtml += '</ul>'; createModal('Manage Currencies', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${CURRENCIES_COLLECTION}', null, 'Currency', [{label: 'Code (e.g., USD)', id: 'currency-code', field: 'code', required: true}, {label: 'Name (e.g., US Dollar)', id: 'currency-name', field: 'name'}], openManageCurrenciesModal, populateCurrenciesDropdown)">Add New Currency</button>`, null, null, 'manage-currencies-modal');
+    listHtml += '</ul>'; createModal('Manage Currencies', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${CURRENCIES_COLLECTION}', null, 'Currency', [{label: 'Code (e.g., USD)', id: 'currency-code', field: 'code', required: true}, {label: 'Name (e.g., US Dollar)', id: 'currency-name', field: 'name'}], openManageCurrenciesModal, populateCurrenciesDropdown)">Add New Currency</button>`, null, null, 'manage-currencies-modal', true);
 }
 function populateCurrenciesDropdown() {
     populateSelectWithOptions('inv-currency', CURRENCIES_COLLECTION, 'code', 'code', 'Select Currency');
@@ -353,19 +364,44 @@ function populateCurrenciesDropdown() {
 async function openManageCommodityCodesModal() {
     const items = await getAllDocs(COMMODITY_CODES_COLLECTION); let listHtml = '<ul class="settings-list">';
     items.sort((a,b) => (a.code||'').localeCompare(b.code||'')).forEach(item => { listHtml += `<li><span>${item.code || 'N/A'} ${item.description ? '('+item.description+')' : ''}</span><span class="actions"><button class="button" onclick="openAddEditSimpleSettingModal('${COMMODITY_CODES_COLLECTION}', '${item.id}', 'Commodity Code', [{label: 'Code', id: 'cc-code', field: 'code', required: true}, {label: 'Description (Optional)', id: 'cc-description', field: 'description'}], openManageCommodityCodesModal, populateCommodityCodesDropdown)">Edit</button><button class="action-button" onclick="deleteSimpleSetting('${COMMODITY_CODES_COLLECTION}', '${item.id}', 'Commodity Code', openManageCommodityCodesModal, populateCommodityCodesDropdown)">Remove</button></span></li>`; });
-    listHtml += '</ul>'; createModal('Manage Commodity Codes', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${COMMODITY_CODES_COLLECTION}', null, 'Commodity Code', [{label: 'Code', id: 'cc-code', field: 'code', required: true}, {label: 'Description (Optional)', id: 'cc-description', field: 'description'}], openManageCommodityCodesModal, populateCommodityCodesDropdown)">Add New</button>`, null, null, 'manage-commodity-codes-modal');
+    listHtml += '</ul>'; createModal('Manage Commodity Codes', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${COMMODITY_CODES_COLLECTION}', null, 'Commodity Code', [{label: 'Code', id: 'cc-code', field: 'code', required: true}, {label: 'Description (Optional)', id: 'cc-description', field: 'description'}], openManageCommodityCodesModal, populateCommodityCodesDropdown)">Add New</button>`, null, null, 'manage-commodity-codes-modal', true);
 }
-function populateCommodityCodesDropdown() { populateSelectWithOptions('inv-commodity-code', COMMODITY_CODES_COLLECTION, 'code', 'code', 'Select Commodity Code');}
+function populateCommodityCodesDropdown() { 
+    // Updated to show code plus description
+    const selectElement = document.getElementById('inv-commodity-code');
+    if (!selectElement) return;
+    
+    const currentValue = selectElement.value;
+    selectElement.innerHTML = `<option value="">-- Select Commodity Code --</option>`;
+    
+    try {
+        getAllDocs(COMMODITY_CODES_COLLECTION).then(items => {
+            items.sort((a,b) => (a.code||'').localeCompare(b.code||'')).forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.code;
+                // Display both code and description in the dropdown
+                option.textContent = item.description ? `${item.code} - ${item.description}` : item.code;
+                selectElement.appendChild(option);
+            });
+            
+            if (currentValue) {
+                selectElement.value = currentValue;
+            }
+        });
+    } catch (error) {
+        console.error("Error populating commodity codes dropdown:", error);
+    }
+}
 async function openManageIncotermsModal() {
     const items = await getAllDocs(INCOTERMS_COLLECTION); let listHtml = '<ul class="settings-list">';
     items.sort((a,b) => (a.term||'').localeCompare(b.term||'')).forEach(item => { listHtml += `<li><span>${item.term || 'N/A'} ${item.description ? '('+item.description+')' : ''}</span><span class="actions"><button class="button" onclick="openAddEditSimpleSettingModal('${INCOTERMS_COLLECTION}', '${item.id}', 'Incoterm', [{label: 'Term (e.g., DDP)', id: 'inco-term', field: 'term', required: true}, {label: 'Description (Optional)', id: 'inco-description', field: 'description'}], openManageIncotermsModal, populateIncotermsDropdown)">Edit</button><button class="action-button" onclick="deleteSimpleSetting('${INCOTERMS_COLLECTION}', '${item.id}', 'Incoterm', openManageIncotermsModal, populateIncotermsDropdown)">Remove</button></span></li>`; });
-    listHtml += '</ul>'; createModal('Manage Incoterms', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${INCOTERMS_COLLECTION}', null, 'Incoterm', [{label: 'Term (e.g., DDP)', id: 'inco-term', field: 'term', required: true}, {label: 'Description (Optional)', id: 'inco-description', field: 'description'}], openManageIncotermsModal, populateIncotermsDropdown)">Add New</button>`, null, null, 'manage-incoterms-modal');
+    listHtml += '</ul>'; createModal('Manage Incoterms', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${INCOTERMS_COLLECTION}', null, 'Incoterm', [{label: 'Term (e.g., DDP)', id: 'inco-term', field: 'term', required: true}, {label: 'Description (Optional)', id: 'inco-description', field: 'description'}], openManageIncotermsModal, populateIncotermsDropdown)">Add New</button>`, null, null, 'manage-incoterms-modal', true);
 }
 function populateIncotermsDropdown() { populateSelectWithOptions('inv-incoterms', INCOTERMS_COLLECTION, 'term', 'term', 'Select Incoterm');}
 async function openManageStatementsModal() {
     const items = await getAllDocs(STATEMENTS_COLLECTION); let listHtml = '<ul class="settings-list">';
     items.sort((a,b) => (a.statementText||'').localeCompare(b.statementText||'')).forEach(item => { listHtml += `<li><span style="white-space: pre-wrap; word-break: break-word;">${item.statementText || 'N/A'}</span><span class="actions"><button class="button" onclick="openAddEditSimpleSettingModal('${STATEMENTS_COLLECTION}', '${item.id}', 'Statement', [{label: 'Statement Text', id: 'stmt-text', field: 'statementText', type: 'textarea', required: true}], openManageStatementsModal, populateStatementsList)">Edit</button><button class="action-button" onclick="deleteSimpleSetting('${STATEMENTS_COLLECTION}', '${item.id}', 'Statement', openManageStatementsModal, populateStatementsList)">Remove</button></span></li>`; });
-    listHtml += '</ul>'; createModal('Manage Statements', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${STATEMENTS_COLLECTION}', null, 'Statement', [{label: 'Statement Text', id: 'stmt-text', field: 'statementText', type: 'textarea', required: true}], openManageStatementsModal, populateStatementsList)">Add New</button>`, null, null, 'manage-statements-modal');
+    listHtml += '</ul>'; createModal('Manage Statements', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${STATEMENTS_COLLECTION}', null, 'Statement', [{label: 'Statement Text', id: 'stmt-text', field: 'statementText', type: 'textarea', required: true}], openManageStatementsModal, populateStatementsList)">Add New</button>`, null, null, 'manage-statements-modal', true);
 }
 async function populateStatementsList() {
     const statementsListDiv = document.getElementById('inv-statements-list'); if (!statementsListDiv) return; statementsListDiv.innerHTML = ''; 
@@ -379,7 +415,7 @@ async function populateStatementsList() {
 async function openManagePackingTypesModal() {
     const items = await getAllDocs(PACKING_TYPES_COLLECTION); let listHtml = '<ul class="settings-list">';
     items.sort((a,b) => (a.typeName||'').localeCompare(b.typeName||'')).forEach(item => { listHtml += `<li><span>${item.typeName || 'N/A'}</span><span class="actions"><button class="button" onclick="openAddEditSimpleSettingModal('${PACKING_TYPES_COLLECTION}', '${item.id}', 'Packing Type', [{label: 'Type Name', id: 'pt-name', field: 'typeName', required: true}], openManagePackingTypesModal, populatePackingTypeDropdownsForTemplates)">Edit</button><button class="action-button" onclick="deleteSimpleSetting('${PACKING_TYPES_COLLECTION}', '${item.id}', 'Packing Type', openManagePackingTypesModal, populatePackingTypeDropdownsForTemplates)">Remove</button></span></li>`; });
-    listHtml += '</ul>'; createModal('Manage Packing Types', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${PACKING_TYPES_COLLECTION}', null, 'Packing Type', [{label: 'Type Name', id: 'pt-name', field: 'typeName', required: true}], openManagePackingTypesModal, populatePackingTypeDropdownsForTemplates)">Add New</button>`, null, null, 'manage-packing-types-modal');
+    listHtml += '</ul>'; createModal('Manage Packing Types', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${PACKING_TYPES_COLLECTION}', null, 'Packing Type', [{label: 'Type Name', id: 'pt-name', field: 'typeName', required: true}], openManagePackingTypesModal, populatePackingTypeDropdownsForTemplates)">Add New</button>`, null, null, 'manage-packing-types-modal', true);
 }
 function populatePackingTypeDropdownsForTemplates() { populateSelectWithOptions('template-packing-type', PACKING_TYPES_COLLECTION, 'typeName', 'typeName', 'Select Packing Type'); }
 
@@ -388,7 +424,7 @@ function populatePackingTypeDropdownsForTemplates() { populateSelectWithOptions(
 async function openManagePackingTemplatesModal() {
     currentEditingPackingTemplateId = null; const templates = await getAllDocs(PACKING_TEMPLATES_COLLECTION); let listHtml = '<ul class="settings-list">';
     templates.sort((a,b) => (a.templateName||'').localeCompare(b.templateName||'')).forEach(template => { listHtml += `<li><span>${template.templateName} (Packing: ${template.packingType || 'N/A'}, ${template.length || 0}x${template.width || 0}x${template.height || 0}cm, ${template.weight || 0}kg)</span><span class="actions"><button class="button" onclick="openAddEditPackingTemplateModal('${template.id}')">Edit</button><button class="action-button" onclick="deletePackingTemplate('${template.id}')">Remove</button></span></li>`; });
-    listHtml += '</ul>'; createModal('Manage Packing Templates', `${listHtml}<button class="button" onclick="openAddEditPackingTemplateModal()">Add New Template</button>`, null, null, 'manage-packing-templates-modal');
+    listHtml += '</ul>'; createModal('Manage Packing Templates', `${listHtml}<button class="button" onclick="openAddEditPackingTemplateModal()">Add New Template</button>`, null, null, 'manage-packing-templates-modal', true);
 }
 async function openAddEditPackingTemplateModal(templateId = null) {
     currentEditingPackingTemplateId = templateId; let templateData = { templateName: '', packingType: '', length: '', width: '', height: '', weight: '' };
@@ -433,7 +469,7 @@ async function deletePackingTemplate(templateId) {
 async function openManageSigneesModal() {
     currentEditingSigneeId = null; const signees = await getAllDocs(SIGNEES_COLLECTION); let listHtml = '<ul class="settings-list">';
     signees.sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(signee => { listHtml += `<li><span>${signee.name || 'N/A'}</span>${signee.signatureBase64 ? `<img src="${signee.signatureBase64}" alt="Sig" style="max-height:30px;border:1px solid #eee;margin-left:10px;">` : '(No sig)'}<span class="actions"><button class="button" onclick="openAddEditSigneeModal('${signee.id}')">Edit</button><button class="action-button" onclick="deleteSignee('${signee.id}')">Remove</button></span></li>`; });
-    listHtml += '</ul>'; createModal('Manage Signees', `${listHtml}<button class="button" onclick="openAddEditSigneeModal()">Add New Signee</button>`, null, null, 'manage-signees-modal');
+    listHtml += '</ul>'; createModal('Manage Signees', `${listHtml}<button class="button" onclick="openAddEditSigneeModal()">Add New Signee</button>`, null, null, 'manage-signees-modal', true);
 }
 async function openAddEditSigneeModal(signeeId = null) {
     currentEditingSigneeId = signeeId; let signeeData = { name: '', signatureBase64: '' }; 

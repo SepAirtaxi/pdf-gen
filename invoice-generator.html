@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=1.1"> <!-- Cache busting for CSS -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
     <div class="app-container">
@@ -45,6 +46,11 @@
                         <div><label for="inv-signed-by">Signed by:</label><select id="inv-signed-by" name="signedBy"></select></div>
                     </div>
                     <div class="form-grid-column">
+                        <div><label for="inv-invoice-type">Invoice Type:</label><select id="inv-invoice-type" name="invoiceType">
+                            <option value="Proforma Invoice">Proforma Invoice</option>
+                            <option value="Commercial Invoice">Commercial Invoice</option>
+                            <option value="Shipping Invoice">Shipping Invoice</option>
+                        </select></div>
                         <div><label for="inv-currency">Currency:</label><select id="inv-currency" name="currency"></select></div>
                         <div><label for="inv-commodity-code">Commodity Code:</label><select id="inv-commodity-code" name="commodityCode"></select></div>
                         <div><label for="inv-location">Location:</label><input type="text" id="inv-location" name="location" placeholder="e.g., Billund"></div>

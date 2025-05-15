@@ -1,3 +1,5 @@
+// js/invoice-form.js - Modified to handle the new invoice type field
+
 const MIN_ITEM_ROWS = 1; 
 const MIN_COLLI_ROWS = 1;
 let itemLineCounter = 0;
@@ -419,6 +421,13 @@ async function populateFormWithLoadedData(invoiceData) {
     document.getElementById('inv-location').value = invoiceData.general.location || '';
     document.getElementById('inv-shipment-ref').value = invoiceData.general.shipmentRef || '';
     document.getElementById('inv-signed-by').value = invoiceData.general.signedBy || '';
+    
+    // Handle the new invoice type field
+    if (invoiceData.general.invoiceType) {
+        document.getElementById('inv-invoice-type').value = invoiceData.general.invoiceType;
+    } else {
+        document.getElementById('inv-invoice-type').value = 'Proforma Invoice'; // Default if not present
+    }
     
     document.getElementById('inv-currency').dispatchEvent(new Event('change'));
 
