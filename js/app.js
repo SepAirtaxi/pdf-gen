@@ -17,44 +17,75 @@ function openTab(evt, tabName) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const invDateInput = document.getElementById('inv-date');
-    if (invDateInput) {
-        invDateInput.valueAsDate = new Date();
+    // Check if we're on the invoice generator page
+    if (document.getElementById('inv-date')) {
+        const invDateInput = document.getElementById('inv-date');
+        if (invDateInput) {
+            invDateInput.valueAsDate = new Date();
+        }
+
+        if (typeof initializeSettings === 'function') {
+            initializeSettings();
+        }
+        // Initialize invoice form AFTER settings (so dropdowns from settings are ready)
+        if (typeof initializeInvoiceForm === 'function') {
+            initializeInvoiceForm().then(() => { // If initializeInvoiceForm is async
+                console.log("Invoice form initialized.");
+                 // Set the first tab as active after all initializations
+                const firstTabButton = document.querySelector('.tabs .tab-link');
+                if (firstTabButton) {
+                    // No need to click if HTML already sets the 'active' class and 'active-tab-content'
+                    // The HTML added script handles the click, this is more for state consistency
+                    if (!document.querySelector('.tab-content.active-tab-content')) {
+                        firstTabButton.click(); 
+                    }
+                }
+            }).catch(error => console.error("Error initializing invoice form:", error));
+        } else {
+             const firstTabButton = document.querySelector('.tabs .tab-link');
+                if (firstTabButton) {
+                    if (!document.querySelector('.tab-content.active-tab-content')) {
+                       firstTabButton.click(); 
+                    }
+                }
+        }
+
+        if (typeof initializeLoadInvoice === 'function') {
+            initializeLoadInvoice();
+        }
+
+        const generatePdfBtn = document.getElementById('generate-pdf-btn');
+        if (generatePdfBtn && typeof generateInvoicePDF === 'function') {
+            generatePdfBtn.addEventListener('click', generateInvoicePDF);
+        }
     }
 
-    if (typeof initializeSettings === 'function') {
-        initializeSettings();
-    }
-    // Initialize invoice form AFTER settings (so dropdowns from settings are ready)
-    if (typeof initializeInvoiceForm === 'function') {
-        initializeInvoiceForm().then(() => { // If initializeInvoiceForm is async
-            console.log("Invoice form initialized.");
-             // Set the first tab as active after all initializations
+    // Check if we're on the certificate generator page
+    if (document.getElementById('cert-product-type')) {
+        if (typeof initializeCertificateSettings === 'function') {
+            initializeCertificateSettings();
+        }
+        
+        if (typeof initializeCertificateForm === 'function') {
+            initializeCertificateForm();
+            console.log("Certificate form initialized.");
+            
+            // Set the first tab as active after all initializations
             const firstTabButton = document.querySelector('.tabs .tab-link');
             if (firstTabButton) {
-                // No need to click if HTML already sets the 'active' class and 'active-tab-content'
-                // The HTML added script handles the click, this is more for state consistency
                 if (!document.querySelector('.tab-content.active-tab-content')) {
                     firstTabButton.click(); 
                 }
             }
-        }).catch(error => console.error("Error initializing invoice form:", error));
-    } else {
-         const firstTabButton = document.querySelector('.tabs .tab-link');
-            if (firstTabButton) {
-                if (!document.querySelector('.tab-content.active-tab-content')) {
-                   firstTabButton.click(); 
-                }
-            }
-    }
+        }
 
+        if (typeof initializeLoadCertificate === 'function') {
+            initializeLoadCertificate();
+        }
 
-    if (typeof initializeLoadInvoice === 'function') {
-        initializeLoadInvoice();
-    }
-
-    const generatePdfBtn = document.getElementById('generate-pdf-btn');
-    if (generatePdfBtn && typeof generateInvoicePDF === 'function') {
-        generatePdfBtn.addEventListener('click', generateInvoicePDF);
+        const generateCertPdfBtn = document.getElementById('generate-certificate-pdf-btn');
+        if (generateCertPdfBtn && typeof generateCertificatePDF === 'function') {
+            generateCertPdfBtn.addEventListener('click', generateCertificatePDF);
+        }
     }
 });
