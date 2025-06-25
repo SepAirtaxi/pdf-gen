@@ -191,9 +191,9 @@ async function generateInvoicePDF() {
         let declarationBoxEndY = topRightInfoY; 
         let signeeDetails = generalData.signedBy ? await getDocById(SIGNEES_COLLECTION, generalData.signedBy) : null;
         if (signeeDetails) {
-            // Reduced box size by ~33% as requested
-            const boxWidth = 50; // Reduced from 70 (about 30% smaller)
-            const boxHeight = 22; // Reduced from 30 (about 30% smaller)
+            // Increased box width to accommodate full declaration text
+            const boxWidth = 58; // Increased from 50 to fit the full statement
+            const boxHeight = 22; // Keep height the same
             const boxX = rightColumnX - boxWidth; 
             const boxY = pageNumY + 2; // Start box below page number Y
             declarationBoxEndY = boxY + boxHeight;
@@ -225,15 +225,15 @@ async function generateInvoicePDF() {
                     });
                     
                     if (sigImg.width > 0 && sigImg.height > 0) {
-                        // Reduced signature size
+                        // Increased signature size by 15%
                         const sigMaxH = boxHeight - (textYInBox - boxY) - 2;
                         const sigMaxW = boxWidth - 8; // Reduced max width
                         let sigW = sigImg.width;
                         let sigH = sigImg.height;
-                        // Further reduced scaling factor
+                        // Increased scaling factor by 15%
                         const r = Math.min(sigMaxW/sigW, sigMaxH/sigH);
-                        sigW = sigW * r * 0.8; // Further reduced from 1.0 to 0.8
-                        sigH = sigH * r * 0.8; // Further reduced from 1.0 to 0.8
+                        sigW = sigW * r * 0.92; // Increased from 0.8 to 0.92 (15% increase)
+                        sigH = sigH * r * 0.92; // Increased from 0.8 to 0.92 (15% increase)
                         const sigX = boxX + (boxWidth - sigW) / 2;
                         doc.addImage(signeeDetails.signatureBase64, 'PNG', sigX, textYInBox, sigW, sigH);
                     } else {
@@ -263,30 +263,17 @@ async function generateInvoicePDF() {
         doc.setTextColor(0, 0, 0); // Reset text color to black
         console.log("After Title, Y:", currentY);
 
-        // D. From / To Addresses Table --- COMPLETELY NEW APPROACH
+        // D. From / To Addresses Table --- PROPER TWO-ROW TABLE WITH DYNAMIC HEIGHT
         const fromEntityDetails = generalData.from ? await getDocById(ENTITIES_COLLECTION, generalData.from) : null;
         const toEntityDetails = generalData.to ? await getDocById(ENTITIES_COLLECTION, generalData.to) : null;
         
-        // Draw the table headers (From and To)
+        // Table configuration
         const columnWidth = usableWidth / 2;
         const fromHeaderX = margin;
         const toHeaderX = margin + columnWidth;
+        const headerHeight = 5;
         
-        // Draw the header background
-        doc.setFillColor(230, 230, 230);
-        doc.rect(fromHeaderX, currentY, columnWidth, 5, 'F');
-        doc.rect(toHeaderX, currentY, columnWidth, 5, 'F');
-        
-        // Draw the header text
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.text('From:', fromHeaderX + 1, currentY + 3.5);
-        doc.text('To:', toHeaderX + 1, currentY + 3.5);
-        
-        // Move to data section
-        currentY += 5;
-        
-        // Prepare data sections
+        // Prepare data sections first to calculate dynamic height
         let fromLines = [];
         if (fromEntityDetails) {
             if (fromEntityDetails.companyName) fromLines.push(fromEntityDetails.companyName);
@@ -323,28 +310,43 @@ async function generateInvoicePDF() {
             if (toEntityDetails.phone) toLines.push("Phone: " + toEntityDetails.phone);
         }
         
-        // Determine total rows needed (max of fromLines or toLines)
-        const totalRows = Math.max(fromLines.length, toLines.length);
+        // Calculate dynamic height based on actual content - ensure minimum content
+        const maxDataLines = Math.max(fromLines.length, toLines.length, 1);
         const lineHeight = 3.5; // Height per line of text
-        const padding = 2; // Top and bottom padding
-        const dataHeight = (totalRows * lineHeight) + (padding * 2);
+        const cellPadding = 2; // Top and bottom padding within each cell
+        const dataHeight = (maxDataLines * lineHeight) + (cellPadding * 2);
         
-        // Draw the data cell backgrounds
+        // Set drawing properties
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.3);
         
-        // Draw the entire table border
-        doc.rect(fromHeaderX, currentY - 5, columnWidth * 2, dataHeight + 5, 'S');
+        // ROW 1: Draw header cells with borders and fill
+        const headerRowY = currentY;
+        doc.setFillColor(230, 230, 230);
+        doc.rect(fromHeaderX, headerRowY, columnWidth, headerHeight, 'FD'); // Fill and Draw borders
+        doc.rect(toHeaderX, headerRowY, columnWidth, headerHeight, 'FD'); // Fill and Draw borders
         
-        // Draw vertical line between From and To columns
-        doc.line(toHeaderX, currentY - 5, toHeaderX, currentY + dataHeight);
+        // Draw header text with proper vertical centering
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.text('From:', fromHeaderX + 1, headerRowY + 3.5);
+        doc.text('To:', toHeaderX + 1, headerRowY + 3.5);
         
-        // Render text in data cells
+        // ROW 2: Draw data cells with borders and white fill
+        const dataRowY = headerRowY + headerHeight;
+        doc.setFillColor(255, 255, 255);
+        doc.rect(fromHeaderX, dataRowY, columnWidth, dataHeight, 'FD'); // Fill and Draw borders
+        doc.rect(toHeaderX, dataRowY, columnWidth, dataHeight, 'FD'); // Fill and Draw borders
+        
+        // Render text in data cells with proper padding from top border
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         
+        // Calculate starting Y position for text (with padding matching left padding)
+        const textStartY = dataRowY + 4; // Match the left padding of 2mm
+        
         // Render From column text
-        let fromY = currentY + padding;
+        let fromTextY = textStartY;
         for (let i = 0; i < fromLines.length; i++) {
             const line = fromLines[i];
             
@@ -356,22 +358,23 @@ async function generateInvoicePDF() {
                 
                 // Draw prefix in bold
                 doc.setFont('helvetica', 'bold');
-                doc.text(prefix, fromHeaderX + 1, fromY);
+                doc.text(prefix, fromHeaderX + 2, fromTextY); // Increased left padding
                 
                 // Draw rest of line in normal font
                 const prefixWidth = doc.getTextWidth(prefix);
                 doc.setFont('helvetica', 'normal');
-                doc.text(rest, fromHeaderX + 1 + prefixWidth, fromY);
+                doc.text(rest, fromHeaderX + 2 + prefixWidth, fromTextY);
             } else {
                 // Draw regular line in normal font
-                doc.text(line, fromHeaderX + 1, fromY);
+                doc.setFont('helvetica', 'normal');
+                doc.text(line, fromHeaderX + 2, fromTextY); // Increased left padding
             }
             
-            fromY += lineHeight;
+            fromTextY += lineHeight;
         }
         
         // Render To column text
-        let toY = currentY + padding;
+        let toTextY = textStartY;
         for (let i = 0; i < toLines.length; i++) {
             const line = toLines[i];
             
@@ -383,22 +386,23 @@ async function generateInvoicePDF() {
                 
                 // Draw prefix in bold
                 doc.setFont('helvetica', 'bold');
-                doc.text(prefix, toHeaderX + 1, toY);
+                doc.text(prefix, toHeaderX + 2, toTextY); // Increased left padding
                 
                 // Draw rest of line in normal font
                 const prefixWidth = doc.getTextWidth(prefix);
                 doc.setFont('helvetica', 'normal');
-                doc.text(rest, toHeaderX + 1 + prefixWidth, toY);
+                doc.text(rest, toHeaderX + 2 + prefixWidth, toTextY);
             } else {
                 // Draw regular line in normal font
-                doc.text(line, toHeaderX + 1, toY);
+                doc.setFont('helvetica', 'normal');
+                doc.text(line, toHeaderX + 2, toTextY); // Increased left padding
             }
             
-            toY += lineHeight;
+            toTextY += lineHeight;
         }
         
-        // Update current Y position
-        currentY += dataHeight;
+        // Update current Y position to bottom of the entire table
+        currentY = dataRowY + dataHeight;
         console.log("After From/To Table, Y:", currentY);
 
         // E. & F. Split Details & Statements Tables ---
