@@ -1,5 +1,24 @@
 // js/certificate-pdf.js
 
+// Helper function to format date as DD/MM/YYYY
+function formatCertificateDate(dateString) {
+    if (!dateString) return '';
+    
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        
+        return `${day}/${month}/${year}`;
+    } catch (e) {
+        console.error("Date formatting error:", e);
+        return dateString;
+    }
+}
+
 // Helper function to get next certificate sequential ID
 async function getNextCertificateSequentialId() {
     console.log("getNextCertificateSequentialId called");
@@ -91,9 +110,9 @@ async function generateCertificatePDF() {
         const usableWidth = pageWidth - 2 * margin;
         let currentY = margin;
 
-        // --- PDF Content Generation ---
+        // --- PDF Content Generation (Following Specified Order) ---
         
-        // Company Header (reuse from invoice generator)
+        // 1. Company Header (reuse from invoice generator)
         console.log("Fetching company details...");
         const companyDetails = await getDocById('appSettings', 'mainCompanyDetails');
         console.log("Company Details Fetched:", companyDetails);
@@ -110,6 +129,7 @@ async function generateCertificatePDF() {
                     img.onerror = reject;
                 });
                 if (img.width > 0 && img.height > 0) {
+                    // Same logo sizing as invoice generator
                     let logoWidth = 35 * 1.5;
                     let logoHeight = (img.height * logoWidth) / img.width;
                     const logoMaxHeight = 32;
@@ -131,7 +151,7 @@ async function generateCertificatePDF() {
             logoEndY = currentY;
         }
         
-        // Company text below logo
+        // Company text below logo (same as invoice generator)
         currentY = logoEndY + 8;
         let companyTextEndY = currentY;
 
@@ -145,7 +165,6 @@ async function generateCertificatePDF() {
             }
             doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
-            // Add company address and contact info similar to invoice generator
             let addrLine1 = companyDetails.address1 || '';
             let addrLine2 = companyDetails.address2 || '';
             let zipCity = [companyDetails.zipCode, companyDetails.city].filter(Boolean).join(' ');
@@ -159,69 +178,67 @@ async function generateCertificatePDF() {
                 doc.text(addrLine2, textX, currentY);
                 currentY += 3.5;
             }
+            let contactLine = [
+                companyDetails.phone ? `Ph.: ${companyDetails.phone}` : null,
+                companyDetails.email ? `Email: ${companyDetails.email}` : null,
+                companyDetails.website ? companyDetails.website : null
+            ].filter(Boolean).join(' // ');
+            if (contactLine) {
+                doc.text(contactLine, textX, currentY);
+                currentY += 3.5;
+            }
+            let regLine = [
+                companyDetails.vatNumber ? `VAT: ${companyDetails.vatNumber}` : null,
+                companyDetails.easaApproval ? `EASA: ${companyDetails.easaApproval}` : null
+            ].filter(Boolean).join(' // ');
+            if (regLine) {
+                doc.text(regLine, textX, currentY);
+                currentY += 3.5;
+            }
             companyTextEndY = currentY;
         }
 
-        // Certificate Title and Tracking ID (Top Right)
-        const rightColumnX = pageWidth - margin;
-        let topRightInfoY = companyHeaderStartY;
-        doc.setFontSize(16);
+        // Reset position after company header
+        currentY = companyTextEndY + 15;
+        doc.setTextColor(0, 0, 0);
+
+        // 2. Page Title "Certificate of Conformity" (same format as invoice generator)
+        doc.setFontSize(20);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(120, 120, 120);
-        doc.text("CERTIFICATE OF CONFORMITY", rightColumnX, topRightInfoY, { align: 'right' });
-        topRightInfoY += 8;
-        
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Tracking ID: ${trackingId}`, rightColumnX, topRightInfoY, { align: 'right' });
-        topRightInfoY += 6;
-        
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        const currentDate = new Date().toLocaleDateString();
-        doc.text(`Generated: ${currentDate}`, rightColumnX, topRightInfoY, { align: 'right' });
+        const titleText = "Certificate of Conformity";
+        const titleWidth = doc.getTextWidth(titleText);
+        doc.setTextColor(120, 120, 120); // Medium gray color like invoice generator
+        doc.text(titleText, (pageWidth - titleWidth) / 2, currentY);
+        currentY += 10; // Space below title
+        doc.setTextColor(0, 0, 0); // Reset text color to black
 
-        // Reset position below header
-        currentY = Math.max(companyTextEndY, topRightInfoY) + 15;
-        doc.setTextColor(0, 0, 0);
+        // 3. Date: DD/MM/YYYY (Date: bold, date itself non-bold)
+        const currentDate = new Date();
+        const formattedDate = formatCertificateDate(currentDate);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Date: ", margin, currentY);
+        const dateWidth = doc.getTextWidth("Date: ");
+        doc.setFont("helvetica", "normal");
+        doc.text(formattedDate, margin + dateWidth, currentY);
+        currentY += 6;
 
-        // Product Type and Disclaimer
-        if (certificateData.productType) {
-            const productDisclaimer = await getDocById(PRODUCT_DISCLAIMERS_COLLECTION, certificateData.productType);
-            if (productDisclaimer) {
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.text(`Product Type: ${productDisclaimer.productType}`, margin, currentY);
-                currentY += 8;
-                
-                doc.setFontSize(9);
-                doc.setFont("helvetica", "normal");
-                const disclaimerLines = doc.splitTextToSize(productDisclaimer.disclaimerText, usableWidth);
-                doc.text(disclaimerLines, margin, currentY);
-                currentY += disclaimerLines.length * 4 + 8;
-            }
-        }
+        // 4. Form Tracking Number: CAT-COC-XXXXX (Title bold, number non-bold)
+        doc.setFont("helvetica", "bold");
+        doc.text("Form Tracking Number: ", margin, currentY);
+        const trackingTitleWidth = doc.getTextWidth("Form Tracking Number: ");
+        doc.setFont("helvetica", "normal");
+        doc.text(trackingId, margin + trackingTitleWidth, currentY);
+        currentY += 12; // Extra space before items table
 
-        // Notes section
-        if (certificateData.notes && certificateData.notes.trim()) {
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
-            doc.text("Notes:", margin, currentY);
-            currentY += 5;
-            
-            doc.setFontSize(9);
-            doc.setFont("helvetica", "normal");
-            const notesLines = doc.splitTextToSize(certificateData.notes, usableWidth);
-            doc.text(notesLines, margin, currentY);
-            currentY += notesLines.length * 4 + 8;
-        }
-
-        // Items Table
+        // 5. Items Table
         if (itemsData.length > 0) {
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
-            doc.text("Certified Items:", margin, currentY);
-            currentY += 8;
+            const itemsTitle = "Certified Items:";
+            const itemsTitleWidth = doc.getTextWidth(itemsTitle);
+            doc.text(itemsTitle, (pageWidth - itemsTitleWidth) / 2, currentY); // Center aligned
+            currentY += 6;
 
             const itemsTableHeaders = [["#", "Qty", "Part Number", "Description", "Tracking Number", "Expiry Date"]];
             const itemsTableBodyData = itemsData.map((item, index) => [
@@ -230,7 +247,7 @@ async function generateCertificatePDF() {
                 item.partNumber || '',
                 item.description || '',
                 item.trackingNumber || '',
-                item.expiryDate || ''
+                item.expiryNA ? 'N/A' : (item.expiryDate || '')
             ]);
 
             doc.autoTable({
@@ -240,7 +257,7 @@ async function generateCertificatePDF() {
                 theme: 'grid',
                 styles: {
                     fontSize: 8,
-                    cellPadding: { top: 2, bottom: 2, left: 2, right: 2 },
+                    cellPadding: { top: 0.5, bottom: 0.5, left: 1, right: 1 },
                     valign: 'middle',
                     lineColor: [0, 0, 0],
                     lineWidth: 0.3,
@@ -255,24 +272,88 @@ async function generateCertificatePDF() {
                 bodyStyles: {
                     halign: 'left'
                 },
+                columnStyles: {
+                    0: { halign: 'center' }, // Center align first column (#) - both header and data
+                    1: { halign: 'left' },
+                    2: { halign: 'left' },
+                    3: { halign: 'left' },
+                    4: { halign: 'left' },
+                    5: { halign: 'left' }
+                },
+                didParseCell: function(data) {
+                    // Center align the header of the first column
+                    if (data.column.index === 0 && data.section === 'head') {
+                        data.cell.styles.halign = 'center';
+                    }
+                },
                 margin: { left: margin, right: margin }
             });
-            currentY = doc.lastAutoTable.finalY + 15;
+            currentY = doc.lastAutoTable.finalY + 12;
         }
 
-        // Signature Section
+        // 6. Notes (only if populated) - as a table
+        if (certificateData.notes && certificateData.notes.trim()) {
+            const notesTableData = [
+                ["Notes:"], // Header row
+                [certificateData.notes.trim()] // Content row
+            ];
+
+            doc.autoTable({
+                startY: currentY,
+                body: notesTableData,
+                theme: 'grid',
+                styles: {
+                    fontSize: 9,
+                    cellPadding: { top: 0.5, bottom: 0.5, left: 1, right: 1 }, // Much smaller padding like items table
+                    valign: 'middle',
+                    lineColor: [0, 0, 0],
+                    lineWidth: 0.3,
+                    textColor: [0, 0, 0]
+                },
+                didParseCell: function(data) {
+                    if (data.row.index === 0) {
+                        // First row - "Notes:" header
+                        data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.halign = 'center';
+                        data.cell.styles.fontSize = 10;
+                        data.cell.styles.fillColor = [220, 220, 220]; // Same gray as items table header
+                    } else {
+                        // Second row - notes content
+                        data.cell.styles.fontStyle = 'normal';
+                        data.cell.styles.halign = 'left';
+                        data.cell.styles.fontSize = 9;
+                    }
+                },
+                margin: { left: margin, right: margin }
+            });
+            currentY = doc.lastAutoTable.finalY + 12;
+        }
+
+        // 7. Product Disclaimer (smaller font, center aligned, medium/dark grey)
+        if (certificateData.productType) {
+            const productDisclaimer = await getDocById(PRODUCT_DISCLAIMERS_COLLECTION, certificateData.productType);
+            if (productDisclaimer) {
+                doc.setFontSize(8); // Smaller font as requested
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(90, 90, 90); // Medium/dark grey color
+                const disclaimerLines = doc.splitTextToSize(productDisclaimer.disclaimerText, usableWidth);
+                // Center align each line of the disclaimer
+                disclaimerLines.forEach((line, index) => {
+                    const lineWidth = doc.getTextWidth(line);
+                    doc.text(line, (pageWidth - lineWidth) / 2, currentY + (index * 3.5));
+                });
+                currentY += disclaimerLines.length * 3.5 + 10; // Smaller line height for smaller font
+                doc.setTextColor(0, 0, 0); // Reset text color to black
+            }
+        }
+
+        // 8. Signee Section (signature picture, name, and title - all center aligned)
         const signeeDetails = certificateData.signedBy ? await getDocById(CERT_SIGNEES_COLLECTION, certificateData.signedBy) : null;
         if (signeeDetails) {
-            const signatureBoxY = Math.max(currentY, pageHeight - 60);
+            // Ensure we have space at the bottom of the page
+            const signatureBoxY = Math.max(currentY, pageHeight - 50);
             
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.text("This certificate confirms that the above items conform to the specified requirements.", margin, signatureBoxY);
-            
-            doc.setFontSize(9);
-            doc.text(`Certified by: ${signeeDetails.name}`, margin, signatureBoxY + 8);
-            doc.text(`Date: ${currentDate}`, margin, signatureBoxY + 16);
-            
+            // Signature image (center aligned)
             if (signeeDetails.signatureBase64) {
                 try {
                     const sigImg = new Image();
@@ -290,12 +371,35 @@ async function generateCertificatePDF() {
                         const r = Math.min(sigMaxW / sigW, sigMaxH / sigH);
                         sigW = sigW * r * 0.8;
                         sigH = sigH * r * 0.8;
-                        doc.addImage(signeeDetails.signatureBase64, 'PNG', margin + 80, signatureBoxY + 5, sigW, sigH);
+                        // Center the signature horizontally
+                        const sigX = (pageWidth - sigW) / 2;
+                        doc.addImage(signeeDetails.signatureBase64, 'PNG', sigX, signatureBoxY, sigW, sigH);
+                        currentY = signatureBoxY + sigH + 3;
+                    } else {
+                        currentY = signatureBoxY;
                     }
                 } catch (e) {
                     console.error("Signature error:", e);
+                    currentY = signatureBoxY;
                 }
+            } else {
+                currentY = signatureBoxY;
             }
+
+            // Signee name (center aligned)
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "bold");
+            const signeeName = signeeDetails.name || 'N/A';
+            const signeeNameWidth = doc.getTextWidth(signeeName);
+            doc.text(signeeName, (pageWidth - signeeNameWidth) / 2, currentY);
+            currentY += 4;
+            
+            // Title/position (center aligned)
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            const title = "Authorized Signatory";
+            const titleWidth = doc.getTextWidth(title);
+            doc.text(title, (pageWidth - titleWidth) / 2, currentY);
         }
 
         // Save PDF

@@ -15,6 +15,7 @@ function createCertItemRow(itemData = {}) {
     const description = itemData.description || '';
     const trackingNumber = itemData.trackingNumber || '';
     const expiryDate = itemData.expiryDate || '';
+    const expiryNA = itemData.expiryNA || false;
 
     row.innerHTML = `
         <td><span class="cert-item-line-number">${itemsTableBody.rows.length}</span></td>
@@ -22,13 +23,35 @@ function createCertItemRow(itemData = {}) {
         <td><input type="text" name="cert-item-part-number" value="${partNumber}" placeholder="Part Number" style="width: 98%;"></td>
         <td><input type="text" name="cert-item-description" value="${description}" placeholder="Description" style="width: 98%;"></td>
         <td><input type="text" name="cert-item-tracking-number" value="${trackingNumber}" placeholder="Tracking Number" style="width: 98%;"></td>
-        <td><input type="date" name="cert-item-expiry-date" value="${expiryDate}" style="width: 95%;"></td>
+        <td>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <input type="date" name="cert-item-expiry-date" value="${expiryDate}" style="width: 100%;" ${expiryNA ? 'disabled' : ''}>
+                <label style="font-size: 0.8em; display: flex; align-items: center; gap: 3px; justify-content: center;">
+                    <input type="checkbox" name="cert-item-expiry-na" ${expiryNA ? 'checked' : ''} style="margin: 0;">
+                    No shelf life
+                </label>
+            </div>
+        </td>
         <td><button type="button" class="action-button cert-item-clear-row-btn">Clear</button></td>
     `;
 
     const clearButton = row.querySelector('.cert-item-clear-row-btn');
     if (clearButton) {
         clearButton.addEventListener('click', () => clearCertItemRowContents(row));
+    }
+    
+    // Add event listener for expiry N/A checkbox
+    const expiryNACheckbox = row.querySelector('input[name="cert-item-expiry-na"]');
+    const expiryDateInput = row.querySelector('input[name="cert-item-expiry-date"]');
+    if (expiryNACheckbox && expiryDateInput) {
+        expiryNACheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                expiryDateInput.disabled = true;
+                expiryDateInput.value = '';
+            } else {
+                expiryDateInput.disabled = false;
+            }
+        });
     }
     
     updateCertItemRowNumbersAndButtonsState();
@@ -41,6 +64,15 @@ function clearCertItemRowContents(rowElement) {
             if (input.name === "cert-item-qty") input.value = "";
             else input.value = "";
         });
+        // Clear and enable expiry date checkbox
+        const expiryNACheckbox = rowElement.querySelector('input[name="cert-item-expiry-na"]');
+        const expiryDateInput = rowElement.querySelector('input[name="cert-item-expiry-date"]');
+        if (expiryNACheckbox) {
+            expiryNACheckbox.checked = false;
+        }
+        if (expiryDateInput) {
+            expiryDateInput.disabled = false;
+        }
     }
 }
 
@@ -50,6 +82,10 @@ function isCertItemRowEmpty(rowElement) {
     for (let input of inputs) {
         if (input.value && input.value.trim() !== "") return false;
     }
+    // Check if expiry N/A checkbox is checked (considered as having data)
+    const expiryNACheckbox = rowElement.querySelector('input[name="cert-item-expiry-na"]');
+    if (expiryNACheckbox && expiryNACheckbox.checked) return false;
+    
     return true;
 }
 
@@ -121,12 +157,16 @@ function getCertItemsTableData() {
 
         // Add if there's actual data in the row
         if (partNumberInput || descInput || (qtyInput && qtyInput.value.trim())) {
+            const expiryNACheckbox = row.querySelector('input[name="cert-item-expiry-na"]');
+            const expiryDateInput = row.querySelector('input[name="cert-item-expiry-date"]');
+            
             const item = {
                 qty: qtyInput ? qtyInput.value : '',
                 partNumber: partNumberInput,
                 description: descInput,
                 trackingNumber: row.querySelector('input[name="cert-item-tracking-number"]').value.trim(),
-                expiryDate: row.querySelector('input[name="cert-item-expiry-date"]').value
+                expiryDate: expiryDateInput ? expiryDateInput.value : '',
+                expiryNA: expiryNACheckbox ? expiryNACheckbox.checked : false
             };
             items.push(item);
         }
