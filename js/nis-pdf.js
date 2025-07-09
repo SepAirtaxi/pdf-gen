@@ -111,7 +111,7 @@ async function generateNisPDF() {
         const usableWidth = pageWidth - 2 * margin;
         let currentY = margin;
 
-        // --- PDF Content Generation ---
+        // --- PAGE 1: MAIN NIS FORM ---
         
         // 1. Company Header (reuse from other modules)
         console.log("Fetching company details...");
@@ -169,7 +169,7 @@ async function generateNisPDF() {
             let addrLine2 = companyDetails.address2 || '';
             let zipCity = [companyDetails.zipCode, companyDetails.city].filter(Boolean).join(' ');
             let country = companyDetails.country || '';
-            let fullAddrLine = [addrLine1, zipCity, country].filter(Boolean).join(' // ');
+            let fullAddrLine = [addrLine1, zipCity, country].filter(Boolean).join(' - ');
             if (fullAddrLine) {
                 doc.text(fullAddrLine, textX, currentY);
                 currentY += 3.5;
@@ -179,39 +179,36 @@ async function generateNisPDF() {
                 currentY += 3.5;
             }
             let contactLine = [
-                companyDetails.phone ? `Ph.: ${companyDetails.phone}` : null,
-                companyDetails.email ? `Email: ${companyDetails.email}` : null,
-                companyDetails.website ? companyDetails.website : null
-            ].filter(Boolean).join(' // ');
+                companyDetails.phone ? `Tlf: ${companyDetails.phone}` : null,
+                companyDetails.vatNumber ? `CVR nr. ${companyDetails.vatNumber}` : null
+            ].filter(Boolean).join(' - ');
             if (contactLine) {
                 doc.text(contactLine, textX, currentY);
                 currentY += 3.5;
             }
-            let regLine = [
-                companyDetails.vatNumber ? `VAT: ${companyDetails.vatNumber}` : null,
-                companyDetails.easaApproval ? `EASA: ${companyDetails.easaApproval}` : null
-            ].filter(Boolean).join(' // ');
-            if (regLine) {
-                doc.text(regLine, textX, currentY);
+            if (companyDetails.email) {
+                doc.text(`E-mail ${companyDetails.email}`, textX, currentY);
+                currentY += 3.5;
+            }
+            if (companyDetails.website) {
+                doc.text(companyDetails.website, textX, currentY);
                 currentY += 3.5;
             }
             companyTextEndY = currentY;
         }
 
         // Reset position after company header
-        currentY = companyTextEndY + 15;
+        currentY = companyTextEndY + 10;
         doc.setTextColor(0, 0, 0);
 
-        // 2. Date (top right)
+        // 2. Date (right aligned)
         const formattedDate = formatNisDate(nisData.date);
         doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text("Date:", pageWidth - margin - 40, currentY);
         doc.setFont("helvetica", "normal");
-        doc.text(formattedDate, pageWidth - margin - 20, currentY);
+        doc.text(`Date: ${formattedDate}`, pageWidth - margin, currentY, { align: 'right' });
+        currentY += 10;
 
         // 3. Page Title
-        currentY += 10;
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
         const titleText = "Incident/Accident Clearance Statement (Non-incident)";
@@ -220,13 +217,13 @@ async function generateNisPDF() {
         currentY += 8;
 
         // 4. "To Whom It May Concern:"
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
         doc.text("To Whom It May Concern:", margin, currentY);
         currentY += 8;
 
         // 5. Main paragraph
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         const aircraftNameForText = aircraftDetails ? aircraftDetails.tailNumber : 'N/A';
         const mainParagraphText = `This component installed on aircraft ${aircraftNameForText}, details of which are specified below, has been operated by Airseven since 03/12/2020. The aircraft has a valid Certificate of Airworthiness from Danish Civil Aviation Authority as of the date of this statement.`;
@@ -252,7 +249,7 @@ async function generateNisPDF() {
             nisData.cso || 'N/A'
         ]];
 
-        // Add "(In hours)" subtitle under TSO and CSO headers
+        // Add "(In hours)" subtitle row
         const componentTableHeaders2 = [["", "", "", "(In hours)", ""]];
         const componentTableData2 = [["", "", "", "N/A", "N/A"]];
 
@@ -295,7 +292,7 @@ async function generateNisPDF() {
         currentY = doc.lastAutoTable.finalY + 12;
 
         // 8. Certification statement
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         const certificationText = "I hereby certify that, to the best of my knowledge, during the period since the aircraft entered service with Airseven:";
         const certificationLines = doc.splitTextToSize(certificationText, usableWidth);
@@ -422,6 +419,130 @@ async function generateNisPDF() {
         noteLines.forEach(line => {
             doc.text(line, margin, currentY);
             currentY += 3.5;
+        });
+
+        // --- PAGE 2: GUIDELINES ---
+        doc.addPage();
+        currentY = margin;
+
+        // Company header on second page
+        if (companyDetails && companyDetails.logoBase64) {
+            try {
+                const img = new Image();
+                img.src = companyDetails.logoBase64;
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                });
+                if (img.width > 0 && img.height > 0) {
+                    let logoWidth = 35 * 1.5;
+                    let logoHeight = (img.height * logoWidth) / img.width;
+                    const logoMaxHeight = 32;
+                    if (logoHeight > logoMaxHeight) {
+                        logoWidth = (img.width * logoMaxHeight) / img.height;
+                        logoHeight = logoMaxHeight;
+                    }
+                    doc.addImage(companyDetails.logoBase64, 'PNG', margin, currentY, logoWidth, logoHeight);
+                    logoEndY = currentY + logoHeight;
+                } else {
+                    logoEndY = currentY;
+                }
+            } catch (e) {
+                console.error("Logo processing error:", e);
+                logoEndY = currentY;
+            }
+        } else {
+            logoEndY = currentY;
+        }
+        
+        // Company text below logo on second page
+        currentY = logoEndY + 8;
+        if (companyDetails) {
+            const textX = margin;
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            if (companyDetails.companyName) {
+                doc.text(companyDetails.companyName, textX, currentY);
+                currentY += 4.5;
+            }
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            let addrLine1 = companyDetails.address1 || '';
+            let addrLine2 = companyDetails.address2 || '';
+            let zipCity = [companyDetails.zipCode, companyDetails.city].filter(Boolean).join(' ');
+            let country = companyDetails.country || '';
+            let fullAddrLine = [addrLine1, zipCity, country].filter(Boolean).join(' - ');
+            if (fullAddrLine) {
+                doc.text(fullAddrLine, textX, currentY);
+                currentY += 3.5;
+            }
+            if (addrLine2) {
+                doc.text(addrLine2, textX, currentY);
+                currentY += 3.5;
+            }
+            let contactLine = [
+                companyDetails.phone ? `Tlf: ${companyDetails.phone}` : null,
+                companyDetails.vatNumber ? `CVR nr. ${companyDetails.vatNumber}` : null
+            ].filter(Boolean).join(' - ');
+            if (contactLine) {
+                doc.text(contactLine, textX, currentY);
+                currentY += 3.5;
+            }
+            if (companyDetails.email) {
+                doc.text(`E-mail ${companyDetails.email}`, textX, currentY);
+                currentY += 3.5;
+            }
+            if (companyDetails.website) {
+                doc.text(companyDetails.website, textX, currentY);
+                currentY += 3.5;
+            }
+        }
+
+        currentY += 15;
+
+        // Guidelines Title
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        const guidelinesTitle = "Guidelines for understanding the Incident / Accident Clearance Statement (ICS)";
+        doc.text(guidelinesTitle, margin, currentY);
+        currentY += 8;
+
+        // Guidelines Content
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+
+        const guidelinesContent = [
+            "The purpose of this incident/accident clearance statement is to remove the focus from whether or not an aircraft/engine/part has been subjected to an accident or incident and instead declare that the aircraft/engine/part has been deemed acceptable for continued use.",
+            "",
+            "The statement in paragraph 1 of the ICS provides confirmation that irrespective of the event the aircraft/engine/part has had been subjected to, its airworthiness has been re-established by an approved maintenance organisation in accordance with the applicable airworthiness regulations and instructions of the type certificate holder and/or supplemental type certificate holder (aircraft only) and/or OEM of the part.",
+            "",
+            "The reason for changing focus is that the ICAO definitions of accident and incident (reference Chapter 1 'Definitions' of Annex 13 – 'Aircraft Accident and Incident Investigation' to the Chicago Convention) do not take into account the relative nature of the event and its direct impact on the aircraft/engine/part. Specifically with regard to the definition of incident, it is highly subjective and subject to various interpretations by different regulatory authorities as to what affects or could affect the safety of operation.",
+            "",
+            "The statement in paragraph 2 provides additional confirmation, now customary in the industry that no parts have been obtained from a military source.",
+            "",
+            "Paragraph 2 also provides a statement regarding parts on state aircraft, considered appropriate because of industry requests for clarification regarding government use. Article 3 'Civil and state aircraft' of the Chicago Convention states that military, customs and police aircraft are deemed to be \"state\" aircraft. These aircraft are not placed on the civil register, therefore are not regulated by the associated national civil aviation authority in accordance with ICAO Standards and Recommended Practices (SARPs). For the purposes of this declaration parts fitted to an aircraft that has transferred from a state to a civil register, may require special evaluation prior to regaining their status of being civil aircraft parts, the rationale being that the provenance of these parts, while on a state register may not be verifiable. While aircraft on the civil register are regularly contracted by governments for state business, because the operation occurs under civil rules and the aircraft remains on the civil register during the period of operation, parts from such an aircraft are considered to be civil aircraft parts, therefore reference is made to state rather than government use.",
+            "",
+            "This document is intended to act as an industry acceptable common standard having relevance for the requirements of the commercial aviation industry. Application and use of this document commenced in late 2014 and is not intended to apply retrospectively, therefore previously issued incident / accident statements should retain their acceptability for historical reference. This document will be subject to periodic review and update, with the first review expected to take place in early 2016.",
+            "",
+            "Two document templates have been designed, one to cater for aircraft, the other for engines. The engine template could also be used for individual parts in circumstances where incident / accident clearance statements are required, alternatively the certification provided in paragraphs 1 & 2 could be included in the remarks section of the ATA106 Spec for commercial trace."
+        ];
+
+        guidelinesContent.forEach(paragraph => {
+            if (paragraph === "") {
+                currentY += 4;
+            } else {
+                const paragraphLines = doc.splitTextToSize(paragraph, usableWidth);
+                paragraphLines.forEach(line => {
+                    // Check if we need a new page
+                    if (currentY > pageHeight - 20) {
+                        doc.addPage();
+                        currentY = margin;
+                    }
+                    doc.text(line, margin, currentY);
+                    currentY += 4;
+                });
+                currentY += 2; // Small gap between paragraphs
+            }
         });
 
         // Save PDF

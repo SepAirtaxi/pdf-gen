@@ -10,6 +10,10 @@ function getNisFormData() {
     const aircraftSelect = document.getElementById('nis-aircraft');
     data.aircraftName = aircraftSelect.options[aircraftSelect.selectedIndex]?.text.replace('-- Select Aircraft --','').trim();
 
+    // Get operator name for display
+    const operatorSelect = document.getElementById('nis-operator');
+    data.operatorName = operatorSelect.options[operatorSelect.selectedIndex]?.text.replace('-- Select Operator/Airline --','').trim();
+
     // Use centralized signee utility
     data.signedByName = getSelectedSigneeName('nis-signed-by');
 
@@ -34,6 +38,7 @@ function getNisFormData() {
 async function populateNisFormWithLoadedData(nisData) {
     document.getElementById('nis-date').value = nisData.nis.date || new Date().toISOString().split('T')[0];
     document.getElementById('nis-aircraft').value = nisData.nis.aircraft || '';
+    document.getElementById('nis-operator').value = nisData.nis.operator || '';
     document.getElementById('nis-signed-by').value = nisData.nis.signedBy || '';
     
     // Component details

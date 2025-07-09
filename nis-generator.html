@@ -38,6 +38,7 @@
                     <div class="form-grid-column">
                         <div><label for="nis-date">Date:</label><input type="date" id="nis-date" name="date" required></div>
                         <div><label for="nis-aircraft">Aircraft:</label><select id="nis-aircraft" name="aircraft" required></select></div>
+                        <div><label for="nis-operator">Operator/Airline:</label><select id="nis-operator" name="operator" required></select></div>
                         <div><label for="nis-signed-by">Signed by:</label><select id="nis-signed-by" name="signedBy" required></select></div>
                     </div>
                 </div>
@@ -79,14 +80,19 @@
         <!-- Settings Tab -->
         <div id="settings" class="tab-content">
             <h2>NIS Settings</h2>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3498db;">
+                <h3 style="margin-top: 0; color: #3498db;">📢 Signee Management Moved!</h3>
+                <p>Signee management has been moved to <strong>Global Settings</strong> for consistency across all modules.</p>
+                <p><a href="settings.html" class="button" style="margin-top: 10px;">Go to Global Settings</a></p>
+            </div>
             <div class="settings-sections">
                 <div class="settings-section">
                     <h3>Aircraft</h3>
                     <button id="manage-aircraft-btn" class="button">Manage Aircraft</button>
                 </div>
                 <div class="settings-section">
-                    <h3>Signees</h3>
-                    <button id="manage-nis-signees-btn" class="button">Manage Signees</button>
+                    <h3>Operators/Airlines</h3>
+                    <button id="manage-operators-btn" class="button">Manage Operators/Airlines</button>
                 </div>
             </div>
             <div id="nis-settings-modal-area"></div>
@@ -113,7 +119,8 @@
 
     <!-- App Scripts -->
     <script src="js/firebase-config.js?v=1.2"></script> 
-    <script src="js/db.js?v=1.3"></script>             
+    <script src="js/db.js?v=1.3"></script>
+    <script src="js/signee-utils.js?v=1.0"></script>
     <script src="js/nis-settings.js?v=1.0"></script>       
     <script src="js/nis-form.js?v=1.0"></script>   
     <script src="js/nis-pdf.js?v=1.0"></script>    
