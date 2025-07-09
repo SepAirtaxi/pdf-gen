@@ -2,7 +2,6 @@
 
 const settingsModalArea = document.getElementById('settings-modal-area');
 let currentEditingEntityId = null;
-let currentEditingSigneeId = null;
 let currentEditingPackingTemplateId = null;
 
 // For Simple Settings Modals
@@ -22,8 +21,6 @@ const INCOTERMS_COLLECTION = 'incoterms';
 const STATEMENTS_COLLECTION = 'statements';
 const PACKING_TYPES_COLLECTION = 'packingTypes';
 const PACKING_TEMPLATES_COLLECTION = 'packingTemplates';
-const SIGNEES_COLLECTION = 'signees';
-
 
 // --- Utility to create and show a modal ---
 function createModal(title, contentHtml, onSave = null, onCancel = null, modalId = 'settings-generic-modal', closeOnly = false) {
@@ -76,7 +73,6 @@ function closeModal(modalId = 'settings-generic-modal') {
         modalElement.remove();
     }
     currentEditingEntityId = null; 
-    currentEditingSigneeId = null;
     currentEditingPackingTemplateId = null;
 
     _currentSimpleSettingsCollection = '';
@@ -114,115 +110,6 @@ async function populateSelectWithOptions(selectElementId, collectionName, valueF
         }
     } catch (error) {
         console.error(`Error populating select ${selectElementId}:`, error);
-    }
-}
-
-
-// ===== COMPANY DETAILS MANAGEMENT (SINGLE DOCUMENT) =====
-async function openManageCompanyDetailsModal() {
-    let companyData = { companyName: '', address1: '', address2: '', zipCode: '', city: '', country: '', vatNumber: '', easaApproval: '', email: '', phone: '', website: '', logoBase64: '' };
-    // getDocById is from db.js
-    const doc = await getDocById(COMPANY_SETTINGS_COLLECTION, COMPANY_DETAILS_DOC_ID);
-    if (doc) companyData = { ...companyData, ...doc };
-
-    const formHtml = `
-        <div id="company-details-form">
-            <div><label for="cd-companyName">Company Name:</label><input type="text" id="cd-companyName" value="${companyData.companyName || ''}" required></div>
-            <div><label for="cd-address1">Address 1:</label><input type="text" id="cd-address1" value="${companyData.address1 || ''}"></div>
-            <div><label for="cd-address2">Address 2:</label><input type="text" id="cd-address2" value="${companyData.address2 || ''}"></div>
-            <div><label for="cd-zipCode">ZIP Code:</label><input type="text" id="cd-zipCode" value="${companyData.zipCode || ''}"></div>
-            <div><label for="cd-city">City:</label><input type="text" id="cd-city" value="${companyData.city || ''}"></div>
-            <div><label for="cd-country">Country:</label><input type="text" id="cd-country" value="${companyData.country || ''}"></div>
-            <div><label for="cd-vatNumber">VAT Number:</label><input type="text" id="cd-vatNumber" value="${companyData.vatNumber || ''}"></div>
-            <div><label for="cd-easaApproval">EASA Approval:</label><input type="text" id="cd-easaApproval" value="${companyData.easaApproval || ''}"></div>
-            <div><label for="cd-email">Email:</label><input type="email" id="cd-email" value="${companyData.email || ''}"></div>
-            <div><label for="cd-phone">Phone:</label><input type="tel" id="cd-phone" value="${companyData.phone || ''}"></div>
-            <div><label for="cd-website">Website:</label><input type="text" id="cd-website" value="${companyData.website || ''}"></div>
-            <div><label for="cd-logo-file">Logo (PNG, small):</label><input type="file" id="cd-logo-file" accept="image/png"></div>
-            <div id="cd-logo-preview-container" style="margin-top:10px; margin-left: 210px;"> <!-- Aligned with inputs -->
-                ${companyData.logoBase64 ? `Current Logo: <img id="cd-logo-preview-img" src="${companyData.logoBase64}" alt="Logo Preview" style="max-height: 60px; display: block; margin-top: 5px; border: 1px solid #ddd;">` : '<span id="cd-logo-preview-img">No logo uploaded.</span>'}
-            </div>
-             <small style="margin-left: 210px; display: block;">Upload a new logo (PNG, max 500KB) to replace the existing one.</small>
-        </div>
-    `;
-    createModal('Manage Company Details', formHtml, saveCompanyDetails, null, 'manage-company-details-modal');
-    
-    const logoFileInput = document.getElementById('cd-logo-file');
-    if (logoFileInput) {
-        logoFileInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file && file.type === "image/png") {
-                if (file.size > 500000) { // Approx 500KB
-                    alert("Logo file is too large. Please choose a file smaller than 500KB.");
-                    event.target.value = ""; // Clear the input
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const previewContainer = document.getElementById('cd-logo-preview-container');
-                    let imgElement = document.getElementById('cd-logo-preview-img');
-                    if (!imgElement || imgElement.tagName !== 'IMG') {
-                        previewContainer.innerHTML = 'New Logo Preview: <img id="cd-logo-preview-img" src="" alt="Logo Preview" style="max-height: 60px; display: block; margin-top: 5px; border: 1px solid #ddd;">';
-                        imgElement = document.getElementById('cd-logo-preview-img');
-                    }
-                    imgElement.src = e.target.result;
-                }
-                reader.readAsDataURL(file);
-            } else if (file) {
-                alert("Please select a PNG file for the logo.");
-                event.target.value = "";
-            }
-        });
-    }
-}
-
-async function saveCompanyDetails() {
-    const companyData = {
-        companyName: document.getElementById('cd-companyName').value.trim(),
-        address1: document.getElementById('cd-address1').value.trim(),
-        address2: document.getElementById('cd-address2').value.trim(),
-        zipCode: document.getElementById('cd-zipCode').value.trim(),
-        city: document.getElementById('cd-city').value.trim(),
-        country: document.getElementById('cd-country').value.trim(),
-        vatNumber: document.getElementById('cd-vatNumber').value.trim(),
-        easaApproval: document.getElementById('cd-easaApproval').value.trim(),
-        email: document.getElementById('cd-email').value.trim(),
-        phone: document.getElementById('cd-phone').value.trim(),
-        website: document.getElementById('cd-website').value.trim(),
-        // logoBase64 will be handled below
-    };
-    const logoFile = document.getElementById('cd-logo-file').files[0];
-
-    if (!companyData.companyName) {
-        alert('Company Name is required.');
-        return;
-    }
-
-    try {
-        const existingDetails = await getDocById(COMPANY_SETTINGS_COLLECTION, COMPANY_DETAILS_DOC_ID);
-        if (existingDetails && existingDetails.logoBase64 && !logoFile) {
-            companyData.logoBase64 = existingDetails.logoBase64;
-        }
-
-        if (logoFile) {
-            // Validation already done in event listener, but can double check type/size
-            companyData.logoBase64 = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-                reader.readAsDataURL(logoFile);
-            });
-        } else if (!companyData.logoBase64 && existingDetails && !existingDetails.logoBase64) {
-            // If no new file and no existing logo, ensure it's null or empty string
-            companyData.logoBase64 = ''; 
-        }
-        
-        await db.collection(COMPANY_SETTINGS_COLLECTION).doc(COMPANY_DETAILS_DOC_ID).set(companyData, { merge: true });
-        alert('Company details saved successfully!');
-        closeModal('manage-company-details-modal');
-    } catch (error) {
-        console.error("Error saving company details:", error);
-        alert(`Error saving company details: ${error.message}`);
     }
 }
 
@@ -367,7 +254,6 @@ async function openManageCommodityCodesModal() {
     listHtml += '</ul>'; createModal('Manage Commodity Codes', `${listHtml}<button class="button" onclick="openAddEditSimpleSettingModal('${COMMODITY_CODES_COLLECTION}', null, 'Commodity Code', [{label: 'Code', id: 'cc-code', field: 'code', required: true}, {label: 'Description (Optional)', id: 'cc-description', field: 'description'}], openManageCommodityCodesModal, populateCommodityCodesDropdown)">Add New</button>`, null, null, 'manage-commodity-codes-modal', true);
 }
 function populateCommodityCodesDropdown() { 
-    // Updated to show code plus description
     const selectElement = document.getElementById('inv-commodity-code');
     if (!selectElement) return;
     
@@ -379,7 +265,6 @@ function populateCommodityCodesDropdown() {
             items.sort((a,b) => (a.code||'').localeCompare(b.code||'')).forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.code;
-                // Display both code and description in the dropdown
                 option.textContent = item.description ? `${item.code} - ${item.description}` : item.code;
                 selectElement.appendChild(option);
             });
@@ -465,71 +350,8 @@ async function deletePackingTemplate(templateId) {
 }
 
 
-// ===== SIGNEE MANAGEMENT (Base64) =====
-async function openManageSigneesModal() {
-    currentEditingSigneeId = null; const signees = await getAllDocs(SIGNEES_COLLECTION); let listHtml = '<ul class="settings-list">';
-    signees.sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(signee => { listHtml += `<li><span>${signee.name || 'N/A'}</span>${signee.signatureBase64 ? `<img src="${signee.signatureBase64}" alt="Sig" style="max-height:30px;border:1px solid #eee;margin-left:10px;">` : '(No sig)'}<span class="actions"><button class="button" onclick="openAddEditSigneeModal('${signee.id}')">Edit</button><button class="action-button" onclick="deleteSignee('${signee.id}')">Remove</button></span></li>`; });
-    listHtml += '</ul>'; createModal('Manage Signees', `${listHtml}<button class="button" onclick="openAddEditSigneeModal()">Add New Signee</button>`, null, null, 'manage-signees-modal', true);
-}
-async function openAddEditSigneeModal(signeeId = null) {
-    currentEditingSigneeId = signeeId; let signeeData = { name: '', signatureBase64: '' }; 
-    if (signeeId) { const doc = await getDocById(SIGNEES_COLLECTION, signeeId); if (doc) signeeData = {...signeeData, ...doc}; }
-    const formHtml = `<div id="signee-form">
-        <div><label for="signee-name">Signee Name:</label><input type="text" id="signee-name" value="${signeeData.name}" required></div>
-        <div><label for="signee-signature-file">Signature (PNG):</label><input type="file" id="signee-signature-file" accept="image/png"></div>
-        <div id="signature-preview-container" style="margin-top:10px; margin-left: 210px;">${signeeData.signatureBase64 ? `Current: <img id="signature-preview-img" src="${signeeData.signatureBase64}" alt="Sig" style="max-height:60px;border:1px solid #ddd;">` : '<span id="signature-preview-img">No signature.</span>'}</div>
-        <small style="margin-left: 210px; display: block;">Upload new to replace. Small PNG (e.g., <100KB).</small>
-    </div>`;
-    createModal(signeeId ? 'Edit Signee' : 'Add New Signee', formHtml, saveSignee, null, 'add-edit-signee-modal');
-    document.getElementById('signee-signature-file').addEventListener('change', function(event) {
-        const file = event.target.files[0]; if (!file) return;
-        if (file.type === "image/png") {
-            if (file.size > 500000) { alert("Signature file too large (max 500KB)."); event.target.value = ""; return; }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const previewContainer = document.getElementById('signature-preview-container');
-                let imgEl = document.getElementById('signature-preview-img');
-                if (!imgEl || imgEl.tagName !== 'IMG') { previewContainer.innerHTML = `New Preview: <img id="signature-preview-img" src="${e.target.result}" alt="Preview" style="max-height:60px;border:1px solid #ddd;">`;}
-                else {imgEl.src = e.target.result;}
-            }; reader.readAsDataURL(file);
-        } else { alert("Please select a PNG file."); event.target.value = ""; }
-    });
-}
-async function saveSignee() {
-    const name = document.getElementById('signee-name').value.trim(); if (!name) { alert('Please enter signee name.'); return; }
-    const signatureFile = document.getElementById('signee-signature-file').files[0];
-    let signeeData = { name };
-    if (currentEditingSigneeId) { const existing = await getDocById(SIGNEES_COLLECTION, currentEditingSigneeId); if (existing && existing.signatureBase64) signeeData.signatureBase64 = existing.signatureBase64; }
-    try {
-        if (signatureFile) {
-            signeeData.signatureBase64 = await new Promise((resolve, reject) => {
-                const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(signatureFile);
-            });
-        } else if (!signeeData.signatureBase64 && currentEditingSigneeId) { // If editing and no new file, and no old base64 was loaded (unlikely given above)
-             const existing = await getDocById(SIGNEES_COLLECTION, currentEditingSigneeId);
-             if (existing && !existing.signatureBase64) signeeData.signatureBase64 = ''; // Ensure it's explicitly empty if cleared
-        } else if (!signeeData.signatureBase64 && !currentEditingSigneeId){ // New signee, no file, set to empty
-            signeeData.signatureBase64 = '';
-        }
-
-
-        if (currentEditingSigneeId) await updateDoc(SIGNEES_COLLECTION, currentEditingSigneeId, signeeData);
-        else await addDoc(SIGNEES_COLLECTION, signeeData);
-        alert('Signee saved successfully!'); closeModal('add-edit-signee-modal'); openManageSigneesModal(); populateSigneesDropdown();
-    } catch (error) { console.error("Error saving signee:", error); alert(`Error: ${error.message}`);}
-}
-async function deleteSignee(signeeId) {
-    if (confirm('Are you sure you want to delete this signee?')) {
-        try { await deleteDoc(SIGNEES_COLLECTION, signeeId); alert('Signee deleted!'); openManageSigneesModal(); populateSigneesDropdown();
-        } catch (error) { console.error("Error deleting signee:", error); alert(`Error: ${error.message}`);}
-    }
-}
-function populateSigneesDropdown() { populateSelectWithOptions('inv-signed-by', SIGNEES_COLLECTION, 'id', 'name', 'Select Signee'); }
-
-
-// --- INITIALIZE SETTINGS ---
+// --- INITIALIZE SETTINGS (REMOVED SIGNEE MANAGEMENT) ---
 function initializeSettings() {
-    document.getElementById('manage-company-details-btn').addEventListener('click', openManageCompanyDetailsModal);
     document.getElementById('manage-entities-btn').addEventListener('click', openManageEntitiesModal);
     document.getElementById('manage-currencies-btn').addEventListener('click', openManageCurrenciesModal);
     document.getElementById('manage-commodity-codes-btn').addEventListener('click', openManageCommodityCodesModal);
@@ -537,7 +359,6 @@ function initializeSettings() {
     document.getElementById('manage-statements-btn').addEventListener('click', openManageStatementsModal);
     document.getElementById('manage-packing-types-btn').addEventListener('click', openManagePackingTypesModal);
     document.getElementById('manage-packing-templates-btn').addEventListener('click', openManagePackingTemplatesModal);
-    document.getElementById('manage-signees-btn').addEventListener('click', openManageSigneesModal);
 
     populateEntityDropdowns();
     populateCurrenciesDropdown();
@@ -545,5 +366,9 @@ function initializeSettings() {
     populateIncotermsDropdown();
     populateStatementsList();
     populatePackingTypeDropdownsForTemplates();
-    populateSigneesDropdown();
+    
+    // Use the centralized signee utility instead of local function
+    if (typeof populateSigneeDropdown === 'function') {
+        populateSigneeDropdown('inv-signed-by', 'Select Signee');
+    }
 }

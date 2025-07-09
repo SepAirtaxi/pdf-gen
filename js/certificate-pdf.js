@@ -348,7 +348,8 @@ async function generateCertificatePDF() {
         }
 
         // 8. Signee Section (signature picture, name, and title - all center aligned)
-        const signeeDetails = certificateData.signedBy ? await getDocById(CERT_SIGNEES_COLLECTION, certificateData.signedBy) : null;
+        // Use centralized signee system
+        const signeeDetails = certificateData.signedBy ? await getSigneeById(certificateData.signedBy) : null;
         if (signeeDetails) {
             // Ensure we have space at the bottom of the page
             const signatureBoxY = Math.max(currentY, pageHeight - 50);
@@ -394,10 +395,10 @@ async function generateCertificatePDF() {
             doc.text(signeeName, (pageWidth - signeeNameWidth) / 2, currentY);
             currentY += 4;
             
-            // Title/position (center aligned)
+            // Title/position (center aligned) - use centralized title field
             doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
-            const title = "Authorized Signatory";
+            const title = signeeDetails.title || "Authorized Signatory";
             const titleWidth = doc.getTextWidth(title);
             doc.text(title, (pageWidth - titleWidth) / 2, currentY);
         }

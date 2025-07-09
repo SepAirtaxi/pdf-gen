@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIS Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=1.1">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo-title"><h1 class="invoice-module-title">NIS Generator</h1></div>
+            <a href="index.html" class="button back-button-header">« Modules</a>
+        </header>
+        <div class="action-bar">
+            <button id="generate-nis-pdf-btn" class="button primary-action-button">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                Generate NIS PDF & Save Data
+            </button>
+        </div>
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-link active" onclick="openTab(event, 'nis-details')">NIS Details</button>
+                <button class="tab-link" onclick="openTab(event, 'settings')">Settings</button>
+                <button class="tab-link" onclick="openTab(event, 'load-data')">Load NIS</button>
+            </div>
+        </div>
+
+        <!-- NIS Details Tab -->
+        <div id="nis-details" class="tab-content active-tab-content">
+            <h2>Non-Incident Statement Details</h2>
+            <form id="nis-form">
+                <div class="form-grid">
+                    <div class="form-grid-column">
+                        <div><label for="nis-date">Date:</label><input type="date" id="nis-date" name="date" required></div>
+                        <div><label for="nis-aircraft">Aircraft:</label><select id="nis-aircraft" name="aircraft" required></select></div>
+                        <div><label for="nis-signed-by">Signed by:</label><select id="nis-signed-by" name="signedBy" required></select></div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Component Details Section -->
+            <h3 style="margin-top: 25px;">Component Details</h3>
+            <div class="form-grid">
+                <div class="form-grid-column">
+                    <div><label for="nis-part-number">Part Number:</label><input type="text" id="nis-part-number" name="partNumber" placeholder="Enter part number" required></div>
+                    <div><label for="nis-description">Description:</label><input type="text" id="nis-description" name="description" placeholder="Enter component description" required></div>
+                    <div><label for="nis-serial-no">Serial No.:</label><input type="text" id="nis-serial-no" name="serialNo" placeholder="Enter serial number" required></div>
+                </div>
+                <div class="form-grid-column">
+                    <div>
+                        <label for="nis-tso">TSO:</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="nis-tso" name="tso" placeholder="Enter TSO" style="flex-grow: 1;">
+                            <label style="font-size: 0.9em; display: flex; align-items: center; gap: 3px; width: auto;">
+                                <input type="checkbox" id="nis-tso-na" name="tsoNA" checked style="margin: 0;">
+                                N/A
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="nis-cso">CSO:</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="nis-cso" name="cso" placeholder="Enter CSO" style="flex-grow: 1;">
+                            <label style="font-size: 0.9em; display: flex; align-items: center; gap: 3px; width: auto;">
+                                <input type="checkbox" id="nis-cso-na" name="csoNA" checked style="margin: 0;">
+                                N/A
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <h2>NIS Settings</h2>
+            <div class="settings-sections">
+                <div class="settings-section">
+                    <h3>Aircraft</h3>
+                    <button id="manage-aircraft-btn" class="button">Manage Aircraft</button>
+                </div>
+                <div class="settings-section">
+                    <h3>Signees</h3>
+                    <button id="manage-nis-signees-btn" class="button">Manage Signees</button>
+                </div>
+            </div>
+            <div id="nis-settings-modal-area"></div>
+        </div>
+        
+        <!-- Load NIS Tab -->
+        <div id="load-data" class="tab-content">
+            <h2>Load Saved NIS Data</h2>
+            <select id="saved-nis-dropdown">
+                <option value="">-- Select an NIS to Load --</option>
+            </select>
+            <button id="load-selected-nis-btn" class="button">Load NIS</button>
+            <div id="loaded-nis-details" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js?v=1.2"></script> 
+    <script src="js/db.js?v=1.3"></script>             
+    <script src="js/nis-settings.js?v=1.0"></script>       
+    <script src="js/nis-form.js?v=1.0"></script>   
+    <script src="js/nis-pdf.js?v=1.0"></script>    
+    <script src="js/load-nis.js?v=1.0"></script>   
+    <script src="js/app.js?v=1.2"></script>            
+
+	<!-- Loading Spinner Overlay -->
+	<div id="loading-spinner" class="spinner-overlay">
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<div class="spinner"></div>
+			<div class="spinner-text">Generating NIS PDF...</div>
+		</div>
+	</div>
+	
+	<!-- Toast Notification -->
+	<div id="toast-notification" class="toast-notification">
+		<div id="toast-message">NIS generated and data saved!</div>
+	</div>
+
+</body>
+</html>

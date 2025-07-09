@@ -136,9 +136,8 @@ function getCertificateFormData() {
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
 
-    // Get signee name
-    const signedBySelect = document.getElementById('cert-signed-by');
-    data.signedByName = signedBySelect.options[signedBySelect.selectedIndex]?.text.replace('-- Select Signee --','').trim();
+    // Use centralized signee utility
+    data.signedByName = getSelectedSigneeName('cert-signed-by');
 
     // Get product type name
     const productTypeSelect = document.getElementById('cert-product-type');

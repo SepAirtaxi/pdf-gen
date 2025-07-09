@@ -88,4 +88,40 @@ document.addEventListener('DOMContentLoaded', () => {
             generateCertPdfBtn.addEventListener('click', generateCertificatePDF);
         }
     }
+
+    // Check if we're on the NIS generator page
+    if (document.getElementById('nis-date')) {
+        if (typeof initializeNisSettings === 'function') {
+            initializeNisSettings();
+        }
+        
+        if (typeof initializeNisForm === 'function') {
+            initializeNisForm();
+            console.log("NIS form initialized.");
+            
+            // Set the first tab as active after all initializations
+            const firstTabButton = document.querySelector('.tabs .tab-link');
+            if (firstTabButton) {
+                if (!document.querySelector('.tab-content.active-tab-content')) {
+                    firstTabButton.click(); 
+                }
+            }
+        }
+
+        if (typeof initializeLoadNis === 'function') {
+            initializeLoadNis();
+        }
+
+        const generateNisPdfBtn = document.getElementById('generate-nis-pdf-btn');
+        if (generateNisPdfBtn && typeof generateNisPDF === 'function') {
+            generateNisPdfBtn.addEventListener('click', generateNisPDF);
+        }
+    }
+
+    // Check if we're on the global settings page
+    if (document.getElementById('signees-list')) {
+        if (typeof initializeGlobalSettings === 'function') {
+            initializeGlobalSettings();
+        }
+    }
 });

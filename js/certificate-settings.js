@@ -2,11 +2,9 @@
 
 const certSettingsModalArea = document.getElementById('cert-settings-modal-area');
 let currentEditingDisclaimerId = null;
-let currentEditingCertSigneeId = null;
 
 // Constants for Firestore collections
 const PRODUCT_DISCLAIMERS_COLLECTION = 'productDisclaimers';
-const CERT_SIGNEES_COLLECTION = 'signees'; // Reuse the same signees collection
 
 // --- Utility to create and show a modal ---
 function createCertModal(title, contentHtml, onSave = null, onCancel = null, modalId = 'cert-settings-generic-modal', closeOnly = false) {
@@ -59,7 +57,6 @@ function closeCertModal(modalId = 'cert-settings-generic-modal') {
         modalElement.remove();
     }
     currentEditingDisclaimerId = null;
-    currentEditingCertSigneeId = null;
 }
 
 // ===== PRODUCT DISCLAIMERS MANAGEMENT =====
@@ -153,145 +150,14 @@ function populateProductTypesDropdown() {
     });
 }
 
-// ===== SIGNEE MANAGEMENT (REUSED FROM INVOICE GENERATOR) =====
-async function openManageCertSigneesModal() {
-    currentEditingCertSigneeId = null;
-    const signees = await getAllDocs(CERT_SIGNEES_COLLECTION);
-    let listHtml = '<ul class="settings-list">';
-    signees.sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(signee => {
-        listHtml += `<li><span>${signee.name || 'N/A'}</span>${signee.signatureBase64 ? `<img src="${signee.signatureBase64}" alt="Sig" style="max-height:30px;border:1px solid #eee;margin-left:10px;">` : '(No sig)'}<span class="actions"><button class="button" onclick="openAddEditCertSigneeModal('${signee.id}')">Edit</button><button class="action-button" onclick="deleteCertSignee('${signee.id}')">Remove</button></span></li>`;
-    });
-    listHtml += '</ul>';
-    createCertModal('Manage Signees', `${listHtml}<button class="button" onclick="openAddEditCertSigneeModal()">Add New Signee</button>`, null, null, 'manage-cert-signees-modal', true);
-}
-
-async function openAddEditCertSigneeModal(signeeId = null) {
-    currentEditingCertSigneeId = signeeId;
-    let signeeData = { name: '', signatureBase64: '' };
-    if (signeeId) {
-        const doc = await getDocById(CERT_SIGNEES_COLLECTION, signeeId);
-        if (doc) signeeData = {...signeeData, ...doc};
-    }
-    const formHtml = `<div id="cert-signee-form">
-        <div><label for="cert-signee-name">Signee Name:</label><input type="text" id="cert-signee-name" value="${signeeData.name}" required></div>
-        <div><label for="cert-signee-signature-file">Signature (PNG):</label><input type="file" id="cert-signee-signature-file" accept="image/png"></div>
-        <div id="cert-signature-preview-container" style="margin-top:10px; margin-left: 210px;">${signeeData.signatureBase64 ? `Current: <img id="cert-signature-preview-img" src="${signeeData.signatureBase64}" alt="Sig" style="max-height:60px;border:1px solid #ddd;">` : '<span id="cert-signature-preview-img">No signature.</span>'}</div>
-        <small style="margin-left: 210px; display: block;">Upload new to replace. Small PNG (e.g., <100KB).</small>
-    </div>`;
-    createCertModal(signeeId ? 'Edit Signee' : 'Add New Signee', formHtml, saveCertSignee, null, 'add-edit-cert-signee-modal');
-    document.getElementById('cert-signee-signature-file').addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        if (file.type === "image/png") {
-            if (file.size > 500000) {
-                alert("Signature file too large (max 500KB).");
-                event.target.value = "";
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const previewContainer = document.getElementById('cert-signature-preview-container');
-                let imgEl = document.getElementById('cert-signature-preview-img');
-                if (!imgEl || imgEl.tagName !== 'IMG') {
-                    previewContainer.innerHTML = `New Preview: <img id="cert-signature-preview-img" src="${e.target.result}" alt="Preview" style="max-height:60px;border:1px solid #ddd;">`;
-                } else {
-                    imgEl.src = e.target.result;
-                }
-            };
-            reader.readAsDataURL(file);
-        } else {
-            alert("Please select a PNG file.");
-            event.target.value = "";
-        }
-    });
-}
-
-async function saveCertSignee() {
-    const name = document.getElementById('cert-signee-name').value.trim();
-    if (!name) {
-        alert('Please enter signee name.');
-        return;
-    }
-    const signatureFile = document.getElementById('cert-signee-signature-file').files[0];
-    let signeeData = { name };
-    
-    if (currentEditingCertSigneeId) {
-        const existing = await getDocById(CERT_SIGNEES_COLLECTION, currentEditingCertSigneeId);
-        if (existing && existing.signatureBase64) signeeData.signatureBase64 = existing.signatureBase64;
-    }
-    
-    try {
-        if (signatureFile) {
-            signeeData.signatureBase64 = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(signatureFile);
-            });
-        } else if (!signeeData.signatureBase64 && currentEditingCertSigneeId) {
-            const existing = await getDocById(CERT_SIGNEES_COLLECTION, currentEditingCertSigneeId);
-            if (existing && !existing.signatureBase64) signeeData.signatureBase64 = '';
-        } else if (!signeeData.signatureBase64 && !currentEditingCertSigneeId) {
-            signeeData.signatureBase64 = '';
-        }
-
-        if (currentEditingCertSigneeId) {
-            await updateDoc(CERT_SIGNEES_COLLECTION, currentEditingCertSigneeId, signeeData);
-        } else {
-            await addDoc(CERT_SIGNEES_COLLECTION, signeeData);
-        }
-        alert('Signee saved successfully!');
-        closeCertModal('add-edit-cert-signee-modal');
-        openManageCertSigneesModal();
-        populateCertSigneesDropdown();
-    } catch (error) {
-        console.error("Error saving signee:", error);
-        alert(`Error: ${error.message}`);
-    }
-}
-
-async function deleteCertSignee(signeeId) {
-    if (confirm('Are you sure you want to delete this signee?')) {
-        try {
-            await deleteDoc(CERT_SIGNEES_COLLECTION, signeeId);
-            alert('Signee deleted!');
-            openManageCertSigneesModal();
-            populateCertSigneesDropdown();
-        } catch (error) {
-            console.error("Error deleting signee:", error);
-            alert(`Error: ${error.message}`);
-        }
-    }
-}
-
-function populateCertSigneesDropdown() {
-    const selectElement = document.getElementById('cert-signed-by');
-    if (!selectElement) return;
-
-    const currentValue = selectElement.value;
-    selectElement.innerHTML = `<option value="">-- Select Signee --</option>`;
-
-    getAllDocs(CERT_SIGNEES_COLLECTION).then(signees => {
-        signees.sort((a,b) => (a.name||'').localeCompare(b.name||'')).forEach(signee => {
-            const option = document.createElement('option');
-            option.value = signee.id;
-            option.textContent = signee.name;
-            selectElement.appendChild(option);
-        });
-
-        if (currentValue) {
-            selectElement.value = currentValue;
-        }
-    }).catch(error => {
-        console.error("Error populating signees dropdown:", error);
-    });
-}
-
 // --- INITIALIZE CERTIFICATE SETTINGS ---
 function initializeCertificateSettings() {
     document.getElementById('manage-product-disclaimers-btn').addEventListener('click', openManageProductDisclaimersModal);
-    document.getElementById('manage-cert-signees-btn').addEventListener('click', openManageCertSigneesModal);
 
     populateProductTypesDropdown();
-    populateCertSigneesDropdown();
+    
+    // Use centralized signee management
+    if (typeof populateSigneeDropdown === 'function') {
+        populateSigneeDropdown('cert-signed-by', 'Select Signee');
+    }
 }

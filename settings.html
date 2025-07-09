@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=1.1">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo-title"><h1 class="invoice-module-title">Global Settings</h1></div>
+            <a href="index.html" class="button back-button-header">« Back to Modules</a>
+        </header>
+        
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-link active" onclick="openTab(event, 'signees')">Signees</button>
+                <button class="tab-link" onclick="openTab(event, 'company')">Company Details</button>
+            </div>
+        </div>
+
+        <!-- Signees Tab -->
+        <div id="signees" class="tab-content active-tab-content">
+            <h2>Signee Management</h2>
+            <p style="color: #666; margin-bottom: 25px;">Manage signees who can sign documents across all modules (Invoice, Certificate, NIS). Changes here will affect all modules.</p>
+            
+            <div class="settings-sections">
+                <div class="settings-section" style="grid-column: 1 / -1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>All Signees</h3>
+                        <button id="add-signee-btn" class="button">Add New Signee</button>
+                    </div>
+                    <div id="signees-list-container">
+                        <ul id="signees-list" class="settings-list">
+                            <!-- Signees will be populated here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Details Tab -->
+        <div id="company" class="tab-content">
+            <h2>Company Details</h2>
+            <p style="color: #666; margin-bottom: 25px;">Manage company information that appears on all generated PDFs.</p>
+            
+            <div class="settings-sections">
+                <div class="settings-section" style="grid-column: 1 / -1;">
+                    <h3>Company Information</h3>
+                    <button id="manage-company-details-btn" class="button">Manage Company Details</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal area for settings -->
+    <div id="global-settings-modal-area"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js?v=1.2"></script> 
+    <script src="js/db.js?v=1.3"></script>             
+    <script src="js/global-settings.js?v=1.0"></script>
+    <script src="js/app.js?v=1.2"></script>
+
+    <!-- Loading Spinner Overlay -->
+    <div id="loading-spinner" class="spinner-overlay">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="spinner"></div>
+            <div class="spinner-text">Loading...</div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast-notification">
+        <div id="toast-message">Settings saved successfully!</div>
+    </div>
+
+</body>
+</html>

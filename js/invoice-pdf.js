@@ -189,7 +189,8 @@ async function generateInvoicePDF() {
         topRightInfoY += 4; // Space after page number line
 
         let declarationBoxEndY = topRightInfoY; 
-        let signeeDetails = generalData.signedBy ? await getDocById(SIGNEES_COLLECTION, generalData.signedBy) : null;
+        // Use centralized signee system
+        let signeeDetails = generalData.signedBy ? await getSigneeById(generalData.signedBy) : null;
         if (signeeDetails) {
             // Increased box width to accommodate full declaration text
             const boxWidth = 58; // Increased from 50 to fit the full statement
@@ -211,7 +212,10 @@ async function generateInvoicePDF() {
             doc.text(splitDeclText, boxX + boxWidth / 2, textYInBox, { align: 'center', baseline: 'top' });
             textYInBox += (splitDeclText.length * 3) + 1; // Reduced space after text
 
-            const signedByText = `Signed by: ${signeeDetails.name || 'N/A'}`;
+            // Include title/position if available
+            const signedByText = signeeDetails.title ? 
+                `Signed by: ${signeeDetails.name || 'N/A'}, ${signeeDetails.title}` : 
+                `Signed by: ${signeeDetails.name || 'N/A'}`;
             doc.text(signedByText, boxX + boxWidth / 2, textYInBox, { align: 'center' });
             textYInBox += 2; // Further reduced space before signature
 

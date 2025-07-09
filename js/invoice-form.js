@@ -1,4 +1,4 @@
-// js/invoice-form.js - Modified to handle the new invoice type field
+// js/invoice-form.js - Modified to use centralized signee management
 
 const MIN_ITEM_ROWS = 1; 
 const MIN_COLLI_ROWS = 1;
@@ -353,8 +353,8 @@ function getGeneralFormData() {
     const toSelect = document.getElementById('inv-to');
     data.toEntityName = toSelect.options[toSelect.selectedIndex]?.text.replace('-- Select To Entity --','').trim();
     
-    const signedBySelect = document.getElementById('inv-signed-by');
-    data.signedByName = signedBySelect.options[signedBySelect.selectedIndex]?.text.replace('-- Select Signee --','').trim();
+    // Use centralized signee utility
+    data.signedByName = getSelectedSigneeName('inv-signed-by');
 
     return data;
 }
@@ -422,7 +422,7 @@ async function populateFormWithLoadedData(invoiceData) {
     document.getElementById('inv-shipment-ref').value = invoiceData.general.shipmentRef || '';
     document.getElementById('inv-signed-by').value = invoiceData.general.signedBy || '';
     
-    // Handle the new invoice type field
+    // Handle the invoice type field
     if (invoiceData.general.invoiceType) {
         document.getElementById('inv-invoice-type').value = invoiceData.general.invoiceType;
     } else {

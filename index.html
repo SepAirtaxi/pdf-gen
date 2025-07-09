@@ -15,8 +15,9 @@
             padding: 0;
             background-color: #eef1f5;
             color: #333;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
         }
@@ -29,6 +30,7 @@
             background-color: #ffffff;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
 
         h1 {
@@ -41,7 +43,7 @@
 
         .module-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             grid-auto-rows: 130px;
             gap: 25px;
             margin-top: 20px;
@@ -63,32 +65,16 @@
             cursor: pointer;
         }
 
-        .module-button:hover:not([disabled]) {
+        .module-button:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .module-button[disabled] {
-            opacity: 0.8;
-            cursor: not-allowed;
-        }
-
-        .coming-soon {
-            position: absolute;
-            bottom: 15px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 0.8rem;
-            font-style: italic;
-            opacity: 0.8;
         }
 
         .blue-button {
             background-color: #3498db;
         }
         
-        .blue-button:hover:not([disabled]) {
+        .blue-button:hover {
             background-color: #2980b9;
         }
 
@@ -96,24 +82,43 @@
             background-color: #2ecc71;
         }
         
-        .green-button:hover:not([disabled]) {
+        .green-button:hover {
             background-color: #27ae60;
         }
 
-        .yellow-button {
-            background-color: #f1c40f;
+        .purple-button {
+            background-color: #9b59b6;
         }
         
-        .yellow-button:hover:not([disabled]) {
-            background-color: #f39c12;
+        .purple-button:hover {
+            background-color: #8e44ad;
         }
 
-        .red-button {
-            background-color: #e74c3c;
+        .settings-button {
+            background-color: #34495e;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        .red-button:hover:not([disabled]) {
-            background-color: #c0392b;
+
+        .settings-button:hover {
+            background-color: #2c3e50;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .settings-icon {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
         }
 
         @media (max-width: 768px) {
@@ -148,15 +153,17 @@
             <a href="certificate-generator.html" class="module-button green-button">
                 Certificate Generator
             </a>
-            <button class="module-button yellow-button" disabled>
-                Report Generator
-                <span class="coming-soon">Coming Soon</span>
-            </button>
-            <button class="module-button red-button" disabled>
-                Approval System
-                <span class="coming-soon">Coming Soon</span>
-            </button>
+            <a href="nis-generator.html" class="module-button purple-button">
+                NIS Generator
+            </a>
         </div>
     </div>
+    
+    <a href="settings.html" class="settings-button">
+        <svg class="settings-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+        </svg>
+        Global Settings
+    </a>
 </body>
 </html>
