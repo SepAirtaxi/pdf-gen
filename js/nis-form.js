@@ -36,6 +36,7 @@ function getNisFormData() {
 
 // ===== FORM POPULATION FOR LOADING =====
 async function populateNisFormWithLoadedData(nisData) {
+    // Set form values
     document.getElementById('nis-date').value = nisData.nis.date || new Date().toISOString().split('T')[0];
     document.getElementById('nis-aircraft').value = nisData.nis.aircraft || '';
     document.getElementById('nis-operator').value = nisData.nis.operator || '';

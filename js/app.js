@@ -91,6 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check if we're on the NIS generator page
     if (document.getElementById('nis-date')) {
+        const nisDateInput = document.getElementById('nis-date');
+        if (nisDateInput) {
+            nisDateInput.valueAsDate = new Date();
+        }
+
         if (typeof initializeNisSettings === 'function') {
             initializeNisSettings();
         }

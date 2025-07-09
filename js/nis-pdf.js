@@ -66,7 +66,7 @@ async function generateNisPDF() {
         const nisData = getNisFormData();
         
         // Validation
-        if (!nisData.aircraft || !nisData.signedBy || !nisData.partNumber || !nisData.description || !nisData.serialNo) {
+        if (!nisData.aircraft || !nisData.operator || !nisData.signedBy || !nisData.partNumber || !nisData.description || !nisData.serialNo) {
             hideLoadingSpinner();
             showToast("Please fill in all required fields.", 5000);
             return;
@@ -84,6 +84,10 @@ async function generateNisPDF() {
         const aircraftDetails = nisData.aircraft ? await getDocById(AIRCRAFT_COLLECTION, nisData.aircraft) : null;
         const tailNumber = aircraftDetails ? aircraftDetails.tailNumber : 'Unknown';
         const cleanTailNumber = tailNumber.replace(/[^a-z0-9]/gi, '_');
+        
+        // Get operator details for PDF content
+        const operatorDetails = nisData.operator ? await getDocById(OPERATORS_COLLECTION, nisData.operator) : null;
+        const operatorName = operatorDetails ? operatorDetails.operatorName : 'Unknown Operator';
         
         const generatedPdfFileName = `NIS_${cleanTailNumber}_${sequentialId}.pdf`;
         console.log("Generated PDF Filename:", generatedPdfFileName);
@@ -222,11 +226,11 @@ async function generateNisPDF() {
         doc.text("To Whom It May Concern:", margin, currentY);
         currentY += 8;
 
-        // 5. Main paragraph
+        // 5. Main paragraph - now uses the selected operator dynamically
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         const aircraftNameForText = aircraftDetails ? aircraftDetails.tailNumber : 'N/A';
-        const mainParagraphText = `This component installed on aircraft ${aircraftNameForText}, details of which are specified below, has been operated by Airseven since 03/12/2020. The aircraft has a valid Certificate of Airworthiness from Danish Civil Aviation Authority as of the date of this statement.`;
+        const mainParagraphText = `This component installed on aircraft ${aircraftNameForText}, details of which are specified below, has been operated by ${operatorName} since 03/12/2020. The aircraft has a valid Certificate of Airworthiness from Danish Civil Aviation Authority as of the date of this statement.`;
         const mainParagraphLines = doc.splitTextToSize(mainParagraphText, usableWidth);
         mainParagraphLines.forEach(line => {
             doc.text(line, margin, currentY);
@@ -291,10 +295,10 @@ async function generateNisPDF() {
         });
         currentY = doc.lastAutoTable.finalY + 12;
 
-        // 8. Certification statement
+        // 8. Certification statement - now uses the selected operator dynamically
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
-        const certificationText = "I hereby certify that, to the best of my knowledge, during the period since the aircraft entered service with Airseven:";
+        const certificationText = `I hereby certify that, to the best of my knowledge, during the period since the aircraft entered service with ${operatorName}:`;
         const certificationLines = doc.splitTextToSize(certificationText, usableWidth);
         certificationLines.forEach(line => {
             doc.text(line, margin, currentY);

@@ -1,7 +1,5 @@
 // js/load-nis.js
 
-const SAVED_NIS_COLLECTION_LOAD = 'savedNis';
-
 async function populateSavedNisDropdown() {
     const dropdown = document.getElementById('saved-nis-dropdown');
     if (!dropdown) return;
