@@ -205,11 +205,11 @@ async function generateNisPDF() {
         currentY = companyTextEndY + 10;
         doc.setTextColor(0, 0, 0);
 
-        // 2. Date (right aligned)
+        // 2. Date (left aligned)
         const formattedDate = formatNisDate(nisData.date);
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
-        doc.text(`Date: ${formattedDate}`, pageWidth - margin, currentY, { align: 'right' });
+        doc.text(`Date: ${formattedDate}`, margin, currentY);
         currentY += 10;
 
         // 3. Page Title
@@ -224,16 +224,54 @@ async function generateNisPDF() {
         doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
         doc.text("To Whom It May Concern:", margin, currentY);
-        currentY += 8;
+        currentY += 4;
 
-        // 5. Main paragraph - now uses the selected operator dynamically
+        // 5. Main paragraph - updated text with proper line wrapping
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         const aircraftNameForText = aircraftDetails ? aircraftDetails.tailNumber : 'N/A';
-        const mainParagraphText = `This component installed on aircraft ${aircraftNameForText}, details of which are specified below, has been operated by ${operatorName} since 03/12/2020. The aircraft has a valid Certificate of Airworthiness from Danish Civil Aviation Authority as of the date of this statement.`;
+        const msnForText = aircraftDetails ? aircraftDetails.msn : 'N/A';
+
+        // Create the complete paragraph text
+        const mainParagraphText = `This component installed on aircraft ${aircraftNameForText} MSN ${msnForText}, details of which are specified below, has been operated in accordance with a valid Certificate of Airworthiness from the Danish Civil Aviation Authority.`;
+        
+        // Split into properly wrapped lines
         const mainParagraphLines = doc.splitTextToSize(mainParagraphText, usableWidth);
-        mainParagraphLines.forEach(line => {
-            doc.text(line, margin, currentY);
+        
+        // Process each line to make aircraft info bold
+        mainParagraphLines.forEach((line, lineIndex) => {
+            const aircraftInfo = `${aircraftNameForText} MSN ${msnForText}`;
+            
+            if (line.includes(aircraftInfo)) {
+                // This line contains the aircraft info, split it
+                const beforeAircraft = line.substring(0, line.indexOf(aircraftInfo));
+                const afterAircraft = line.substring(line.indexOf(aircraftInfo) + aircraftInfo.length);
+                
+                let textX = margin;
+                
+                // Normal text before aircraft info
+                if (beforeAircraft) {
+                    doc.setFont("helvetica", "normal");
+                    doc.text(beforeAircraft, textX, currentY);
+                    textX += doc.getTextWidth(beforeAircraft);
+                }
+                
+                // Bold aircraft info
+                doc.setFont("helvetica", "bold");
+                doc.text(aircraftInfo, textX, currentY);
+                textX += doc.getTextWidth(aircraftInfo);
+                
+                // Normal text after aircraft info
+                if (afterAircraft) {
+                    doc.setFont("helvetica", "normal");
+                    doc.text(afterAircraft, textX, currentY);
+                }
+            } else {
+                // Regular line without aircraft info
+                doc.setFont("helvetica", "normal");
+                doc.text(line, margin, currentY);
+            }
+            
             currentY += 4;
         });
         currentY += 5;
@@ -241,9 +279,9 @@ async function generateNisPDF() {
         // 6. "Configuration details as of date of this statement;"
         doc.setFont("helvetica", "bold");
         doc.text("Configuration details as of date of this statement;", margin, currentY);
-        currentY += 8;
+        currentY += 4;
 
-        // 7. Component Details Table
+        // 7. Component Details Table (simplified)
         const componentTableHeaders = [["Part number", "Description", "Serial No.", "TSO", "CSO"]];
         const componentTableData = [[
             nisData.partNumber || '',
@@ -253,14 +291,10 @@ async function generateNisPDF() {
             nisData.cso || 'N/A'
         ]];
 
-        // Add "(In hours)" subtitle row
-        const componentTableHeaders2 = [["", "", "", "(In hours)", ""]];
-        const componentTableData2 = [["", "", "", "N/A", "N/A"]];
-
         doc.autoTable({
             startY: currentY,
-            head: componentTableHeaders.concat(componentTableHeaders2),
-            body: componentTableData.concat(componentTableData2),
+            head: componentTableHeaders,
+            body: componentTableData,
             theme: 'grid',
             styles: {
                 fontSize: 9,
@@ -278,18 +312,6 @@ async function generateNisPDF() {
             },
             bodyStyles: {
                 halign: 'center'
-            },
-            didParseCell: function(data) {
-                if (data.row.index === 1 && data.section === 'head') {
-                    // Second header row - make font smaller and italic
-                    data.cell.styles.fontSize = 7;
-                    data.cell.styles.fontStyle = 'italic';
-                }
-                if (data.row.index === 1 && data.section === 'body') {
-                    // Second body row
-                    data.cell.styles.fontSize = 8;
-                    data.cell.styles.fontStyle = 'italic';
-                }
             },
             margin: { left: margin, right: margin }
         });
@@ -459,8 +481,9 @@ async function generateNisPDF() {
             logoEndY = currentY;
         }
         
-        // Company text below logo on second page
+        // Company text below logo on second page (medium gray)
         currentY = logoEndY + 8;
+        doc.setTextColor(120, 120, 120); // Set to medium gray
         if (companyDetails) {
             const textX = margin;
             doc.setFontSize(10);
@@ -504,16 +527,18 @@ async function generateNisPDF() {
 
         currentY += 15;
 
-        // Guidelines Title
+        // Guidelines Title (medium gray)
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
+        doc.setTextColor(120, 120, 120); // Set to medium gray
         const guidelinesTitle = "Guidelines for understanding the Incident / Accident Clearance Statement (ICS)";
         doc.text(guidelinesTitle, margin, currentY);
         currentY += 8;
 
-        // Guidelines Content
+        // Guidelines Content (medium gray)
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
+        doc.setTextColor(120, 120, 120); // Set to medium gray
 
         const guidelinesContent = [
             "The purpose of this incident/accident clearance statement is to remove the focus from whether or not an aircraft/engine/part has been subjected to an accident or incident and instead declare that the aircraft/engine/part has been deemed acceptable for continued use.",
@@ -541,6 +566,7 @@ async function generateNisPDF() {
                     if (currentY > pageHeight - 20) {
                         doc.addPage();
                         currentY = margin;
+                        doc.setTextColor(120, 120, 120); // Ensure medium gray continues on new page
                     }
                     doc.text(line, margin, currentY);
                     currentY += 4;
