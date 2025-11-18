@@ -9,12 +9,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=1.1">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+	<script src="js/credentials.js"></script>
+	<script src="js/auth-check.js"></script>
 </head>
 <body>
     <div class="app-container">
         <header class="app-header">
             <div class="logo-title"><h1 class="invoice-module-title">Invoice Generator</h1></div>
-            <a href="index.html" class="button back-button-header">« Modules</a>
+            <div style="display:flex;gap:10px;align-items:center;">
+				<a href="index.html" class="button back-button-header">« Modules</a>
+				<button onclick="logout()" class="button back-button-header" style="background-color:#e74c3c;">Logout</button>
+			</div>
         </header>
         <div class="action-bar">
             <button id="generate-pdf-btn" class="button primary-action-button">
@@ -85,12 +90,7 @@
 
         <!-- Settings Tab (REMOVED SIGNEE MANAGEMENT) -->
         <div id="settings" class="tab-content">
-            <h2>Settings</h2>
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3498db;">
-                <h3 style="margin-top: 0; color: #3498db;">📢 Settings Moved!</h3>
-                <p>Signee management has been moved to <strong>Global Settings</strong> for consistency across all modules.</p>
-                <p><a href="settings.html" class="button" style="margin-top: 10px;">Go to Global Settings</a></p>
-            </div>
+			<h2>Settings</h2>
             <div class="settings-sections">
                 <div class="settings-section"><h3>Entities (From/To)</h3><button id="manage-entities-btn" class="button">Manage Entities</button></div>
                 <div class="settings-section"><h3>Currencies</h3><button id="manage-currencies-btn" class="button">Manage Currencies</button></div>

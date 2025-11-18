@@ -9,12 +9,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=1.1">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+	<script src="js/credentials.js"></script>
+	<script src="js/auth-check.js"></script>
 </head>
 <body>
     <div class="app-container">
         <header class="app-header">
             <div class="logo-title"><h1 class="invoice-module-title">Certificate Generator</h1></div>
-            <a href="index.html" class="button back-button-header">« Modules</a>
+            <div style="display:flex;gap:10px;align-items:center;">
+				<a href="index.html" class="button back-button-header">« Modules</a>
+				<button onclick="logout()" class="button back-button-header" style="background-color:#e74c3c;">Logout</button>
+			</div>
         </header>
         <div class="action-bar">
             <button id="generate-certificate-pdf-btn" class="button primary-action-button">
